@@ -27,6 +27,13 @@ builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 
+// Aplicar migraciones automáticamente al arrancar (crítico para Docker/Render)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<NainOrderDbContext>();
+    dbContext.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction()) // Habilitado siempre para la demo
 {
