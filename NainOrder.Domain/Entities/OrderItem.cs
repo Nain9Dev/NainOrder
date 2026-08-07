@@ -19,7 +19,6 @@ public class OrderItem
         if (quantity <= 0) throw new ArgumentException("Quantity must be greater than zero", nameof(quantity));
         if (unitPrice < 0) throw new ArgumentException("Unit price cannot be negative", nameof(unitPrice));
 
-        Id = Guid.NewGuid();
         OrderId = orderId;
         ProductId = productId;
         UnitPrice = unitPrice;
