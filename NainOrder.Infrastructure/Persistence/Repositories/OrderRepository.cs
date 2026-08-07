@@ -27,7 +27,9 @@ public class OrderRepository : IOrderRepository
 
     public Task UpdateAsync(Order order)
     {
-        _context.Orders.Update(order);
+        // Las entidades ya están trackeadas por EF Core, no necesitamos llamar a Update() 
+        // explícitamente. Llamar a Update() con GUIDs provoca que EF Core intente
+        // actualizar items nuevos en lugar de insertarlos.
         return Task.CompletedTask;
     }
 

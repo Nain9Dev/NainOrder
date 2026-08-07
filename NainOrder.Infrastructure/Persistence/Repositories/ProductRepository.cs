@@ -30,7 +30,7 @@ public class ProductRepository : IProductRepository
 
     public Task UpdateAsync(Product product)
     {
-        _context.Products.Update(product);
+        // Tracked by EF Core natively.
         return Task.CompletedTask;
     }
 
