@@ -32,6 +32,16 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<NainOrderDbContext>();
     dbContext.Database.Migrate();
+
+    // Seeding de cliente por defecto para la demo (usa el GUID por defecto de Swagger)
+    if (!dbContext.Customers.Any())
+    {
+        var customer = new NainOrder.Domain.Entities.Customer("Reclutador Demo", "demo@naindev.com");
+        var propertyInfo = typeof(NainOrder.Domain.Entities.Customer).GetProperty("Id");
+        propertyInfo?.SetValue(customer, Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+        dbContext.Customers.Add(customer);
+        dbContext.SaveChanges();
+    }
 }
 
 // Configure the HTTP request pipeline.
