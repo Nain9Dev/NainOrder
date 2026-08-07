@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="NainOrder.Api/NainOrder.Api.csproj" />
+  <Project Path="NainOrder.Application/NainOrder.Application.csproj" />
+  <Project Path="NainOrder.Domain/NainOrder.Domain.csproj" />
+  <Project Path="NainOrder.Infrastructure/NainOrder.Infrastructure.csproj" />
+</Solution>

@@ -1,0 +1,6 @@
+@NainOrder.Api_HostAddress = http://localhost:5283
+
+GET {{NainOrder.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
