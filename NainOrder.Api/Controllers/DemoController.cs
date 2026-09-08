@@ -1,14 +1,15 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using NainOrder.Application.DTOs;
 using NainOrder.Application.Interfaces;
+using NainOrder.Infrastructure.Persistence.Seeding;
 
 namespace NainOrder.Api.Controllers;
 
-/// <summary>
-/// 🚀 START HERE: Endpoint de demostración para el portfolio.
-/// </summary>
+/// <summary>Escenario guiado que recorre el flujo completo de compra en una sola llamada.</summary>
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class DemoController : ControllerBase
 {
     private readonly IProductService _productService;
@@ -21,46 +22,71 @@ public class DemoController : ControllerBase
     }
 
     /// <summary>
-    /// Simula un flujo de compra completo (DDD + Clean Architecture). ¡Haz clic en Try it out -> Execute!
+    /// Ejecuta alta de producto, apertura de pedido, reserva de stock, cobro, preparación
+    /// y envío, devolviendo la traza paso a paso con el tiempo empleado en cada uno.
     /// </summary>
-    [HttpPost("SimulateCompletePurchase")]
-    public async Task<IActionResult> SimulateCompletePurchase()
+    [HttpPost("simulate-purchase")]
+    [ProducesResponseType<SimulationResultDto>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<SimulationResultDto>> SimulateCompletePurchase(CancellationToken cancellationToken)
     {
-        var logs = new List<string>();
-        try
-        {
-            // 1. Crear un producto
-            var productRequest = new CreateProductRequest($"SKU-DEMO-{Guid.NewGuid().ToString()[..6]}", "Laptop Pro X", 1500.00m, 10);
-            var product = await _productService.CreateProductAsync(productRequest);
-            logs.Add($"✅ Producto '{product.Name}' creado con {product.StockQuantity} unidades de stock inicial (ID: {product.Id}).");
+        var steps = new List<SimulationStepDto>();
+        var stopwatch = Stopwatch.StartNew();
 
-            // 2. Crear una orden usando el cliente por defecto
-            var customerId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-            var orderRequest = new CreateOrderRequest(customerId);
-            var order = await _orderService.CreateOrderAsync(orderRequest);
-            logs.Add($"✅ Pedido creado con estado '{order.Status}' para el cliente ID {customerId}.");
+        var suffix = Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
 
-            // 3. Añadir items al pedido (Deduce stock automáticamente en el Dominio)
-            var addRequest = new AddOrderItemRequest(product.Id, 2);
-            order = await _orderService.AddItemToOrderAsync(order.Id, addRequest);
-            logs.Add($"✅ 2 unidades de '{product.Name}' añadidas al pedido. Stock deducido en base de datos. Total pedido: {order.TotalAmount}€.");
+        var product = await TrackAsync(steps, "Products.Create", "Domain valida SKU, precio y stock inicial",
+            () => _productService.CreateProductAsync(
+                new CreateProductRequest($"NO-DEMO-{suffix}", "Estación de trabajo Demo", 1499.00m, 10,
+                                         "Demo", "Producto generado por el escenario guiado."),
+                cancellationToken));
 
-            // 4. Pagar el pedido
-            await _orderService.PayOrderAsync(order.Id);
-            order = await _orderService.GetOrderAsync(order.Id); // Refrescar para ver el estado
-            logs.Add($"✅ Pedido pagado con éxito. El nuevo estado es '{order.Status}'.");
+        var order = await TrackAsync(steps, "Orders.Create", "Order nace en PendingPayment con referencia legible",
+            () => _orderService.CreateOrderAsync(
+                new CreateOrderRequest(DatabaseSeeder.DemoCustomerId), cancellationToken));
 
-            return Ok(new
-            {
-                Message = "¡Simulación de Clean Architecture completada con éxito!",
-                AuditLogs = logs,
-                FinalOrderState = order
-            });
-        }
-        catch (Exception ex)
-        {
-            logs.Add($"❌ Error durante la simulación: {ex.Message}");
-            return BadRequest(new { Logs = logs, Error = ex.Message });
-        }
+        order = await TrackAsync(steps, "Orders.AddItem", "El agregado congela el precio y Product descuenta stock",
+            () => _orderService.AddItemToOrderAsync(
+                order.Id, new AddOrderItemRequest(product.Id, 2), cancellationToken));
+
+        order = await TrackAsync(steps, "Orders.Pay", "Transición PendingPayment -> Paid validada por el dominio",
+            () => _orderService.PayOrderAsync(order.Id, cancellationToken));
+
+        order = await TrackAsync(steps, "Orders.Process", "Transición Paid -> Processing",
+            () => _orderService.ProcessOrderAsync(order.Id, cancellationToken));
+
+        order = await TrackAsync(steps, "Orders.Ship", "Transición Processing -> Shipped, estado final",
+            () => _orderService.ShipOrderAsync(order.Id, cancellationToken));
+
+        var refreshedProduct = await _productService.GetProductAsync(product.Id, cancellationToken);
+        stopwatch.Stop();
+
+        return Ok(new SimulationResultDto(
+            "Flujo completo ejecutado sobre el dominio real, sin atajos ni datos simulados.",
+            stopwatch.ElapsedMilliseconds,
+            steps,
+            order,
+            refreshedProduct));
+    }
+
+    private static async Task<T> TrackAsync<T>(
+        ICollection<SimulationStepDto> steps, string operation, string explanation, Func<Task<T>> action)
+    {
+        var stepWatch = Stopwatch.StartNew();
+        var result = await action();
+        stepWatch.Stop();
+
+        steps.Add(new SimulationStepDto(steps.Count + 1, operation, explanation, stepWatch.ElapsedMilliseconds));
+        return result;
     }
 }
+
+/// <summary>Resultado del escenario guiado.</summary>
+public record SimulationResultDto(
+    string Message,
+    long ElapsedMilliseconds,
+    IReadOnlyList<SimulationStepDto> Steps,
+    OrderDto FinalOrder,
+    ProductDto FinalProduct);
+
+/// <summary>Paso individual del escenario, con la regla de negocio que ejercita.</summary>
+public record SimulationStepDto(int Order, string Operation, string Explanation, long ElapsedMilliseconds);
