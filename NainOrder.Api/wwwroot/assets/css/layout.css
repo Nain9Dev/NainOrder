@@ -1,0 +1,374 @@
+/* ==========================================================================
+   Shell de la aplicación: barra lateral, cabecera y área de contenido.
+   ========================================================================== */
+
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+/* El velo solo existe cuando la barra lateral se convierte en cajón deslizante;
+   en escritorio debe salir del flujo para no ocupar una celda de la retícula. */
+.nav-scrim {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Barra lateral
+   -------------------------------------------------------------------------- */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4);
+  border-right: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+  backdrop-filter: blur(20px);
+  z-index: 40;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--brand-gradient);
+  box-shadow: 0 8px 20px -8px var(--brand-1);
+}
+
+.brand__mark svg {
+  width: 21px;
+  height: 21px;
+  color: #fff;
+}
+
+.brand__name {
+  font-size: var(--text-md);
+  font-weight: 680;
+  letter-spacing: -0.03em;
+}
+
+.brand__tag {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nav__label {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nav__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 520;
+  color: var(--text-secondary);
+  transition: color var(--duration-fast) var(--ease),
+              background-color var(--duration-fast) var(--ease);
+}
+
+.nav__item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.nav__item:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.nav__item[aria-current="page"] {
+  color: var(--text-primary);
+  background: var(--surface-3);
+  font-weight: 600;
+}
+
+/* Indicador de sección activa. */
+.nav__item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -var(--space-4);
+  left: calc(var(--space-4) * -1);
+  top: 50%;
+  translate: 0 -50%;
+  width: 3px;
+  height: 20px;
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  background: var(--brand-gradient);
+}
+
+.nav__badge {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-xs);
+  font-weight: 620;
+  color: var(--text-secondary);
+}
+
+.sidebar__footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sidebar__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 60%, transparent);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+.pulse-dot--down {
+  background: var(--danger);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 60%, transparent);
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
+  50%  { box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 0%, transparent); }
+}
+
+.sidebar__credit {
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.sidebar__credit a {
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-default);
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.sidebar__credit a:hover {
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Cabecera
+   -------------------------------------------------------------------------- */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--topbar-height);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-base) 78%, transparent);
+  backdrop-filter: blur(20px);
+}
+
+.topbar__menu {
+  display: none;
+}
+
+.topbar__titles {
+  min-width: 0;
+}
+
+.topbar__title {
+  font-size: var(--text-md);
+  font-weight: 640;
+  letter-spacing: -0.025em;
+}
+
+.topbar__subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* --------------------------------------------------------------------------
+   Retículas reutilizables
+   -------------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid--kpi {
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+}
+
+.grid--split {
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.grid--catalog {
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+}
+
+.grid--layers {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.row--between {
+  justify-content: space-between;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Adaptación a pantallas menores
+   -------------------------------------------------------------------------- */
+@media (max-width: 1180px) {
+  .grid--split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(84vw, var(--sidebar-width));
+    translate: -102% 0;
+    transition: translate var(--duration-base) var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .app[data-nav-open="true"] .sidebar {
+    translate: 0 0;
+  }
+
+  .nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-base) var(--ease), visibility var(--duration-base);
+  }
+
+  .app[data-nav-open="true"] .nav-scrim {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .topbar__menu {
+    display: inline-flex;
+  }
+
+  .content {
+    padding: var(--space-4);
+  }
+
+  .topbar {
+    padding-inline: var(--space-4);
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar__subtitle {
+    display: none;
+  }
+
+  .grid--kpi {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}

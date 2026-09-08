@@ -5,10 +5,10 @@ namespace NainOrder.Infrastructure.Persistence;
 
 public class NainOrderDbContext : DbContext
 {
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderItem> OrderItems { get; set; }
-    public DbSet<Product> Products { get; set; }
-    public DbSet<Customer> Customers { get; set; }
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     public NainOrderDbContext(DbContextOptions<NainOrderDbContext> options) : base(options)
     {
@@ -17,8 +17,8 @@ public class NainOrderDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
-        // Aplicar todas las configuraciones de Fluent API definidas en el ensamblado
+
+        // Toda la configuración vive en Fluent API: el dominio no conoce EF Core ni SQL.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(NainOrderDbContext).Assembly);
     }
 }
