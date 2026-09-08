@@ -1,0 +1,12 @@
+# Artefactos de compilación y ficheros locales que no deben entrar en el contexto.
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.git/
+.gitignore
+NainOrder.Tests/
