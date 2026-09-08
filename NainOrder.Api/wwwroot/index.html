@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NainOrder · Motor de pedidos</title>
+  <meta name="description" content="Panel de control del motor de pedidos NainOrder: catálogo, ciclo de vida del pedido y métricas en tiempo real sobre una API .NET con Clean Architecture.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#08090d" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/views.css">
+
+  <script>
+    // Se aplica el tema antes del primer pintado para evitar un destello del tema contrario.
+    (() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("nainorder.state") || "{}").theme;
+        const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        document.documentElement.dataset.theme = saved || (prefersLight ? "light" : "dark");
+      } catch {
+        /* El almacenamiento puede estar bloqueado; se mantiene el tema por defecto. */
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div style="display:grid;place-items:center;min-height:100dvh;gap:1rem;color:#6f758c;font-family:system-ui,sans-serif">
+    <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(115deg,#6366f1,#8b5cf6 45%,#22d3ee)"></div>
+    <p style="font-size:0.875rem">Cargando NainOrder…</p>
+  </div>
+
+  <noscript>
+    <div style="max-width:46ch;margin:4rem auto;font-family:system-ui,sans-serif;color:#a2a8bd;text-align:center">
+      <h1 style="color:#f2f4f9">NainOrder</h1>
+      <p>Este panel necesita JavaScript. La API sigue disponible y documentada en
+        <a href="/swagger" style="color:#8b5cf6">/swagger</a>.</p>
+    </div>
+  </noscript>
+
+  <script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>
