@@ -1,12 +1,31 @@
 /**
- * Cliente HTTP de la API.
+ * Cliente HTTP de la API y motor de dominio interactivo para demo autónoma.
  *
  * Además de hablar con el backend, publica cada llamada en un bus de trazas: la vista
  * de arquitectura las muestra en vivo, de modo que el recorrido de una petición por
  * las capas deja de ser una afirmación del README y pasa a verse en pantalla.
+ *
+ * En entornos estáticos (GitHub Pages o servidor sin API .NET en ejecución), conmuta
+ * de forma transparente al motor de dominio en memoria (mock-backend.js), preservando
+ * todas las reglas de Clean Architecture y la persistencia en el navegador.
  */
 
+import { mockDispatch, mockDb } from "./mock-backend.js";
+
 const BASE = "/api";
+
+/** Determina si estamos en un entorno estático sin backend .NET. */
+let isStaticHost =
+  typeof window !== "undefined" &&
+  (window.location.hostname.endsWith("github.io") ||
+   window.location.protocol === "file:" ||
+   Boolean(window.__NAINORDER_FORCE_MOCK__));
+
+export const isDemoMode = () => isStaticHost;
+
+export const resetDemoDatabase = () => {
+  mockDb.reset();
+};
 
 /** Error de negocio devuelto por la API en formato RFC 7807. */
 export class ApiError extends Error {
@@ -53,8 +72,37 @@ const buildUrl = (path, query) => {
 };
 
 async function request(method, path, { body, query, signal } = {}) {
-  const url = buildUrl(path, query);
   const startedAt = performance.now();
+
+  if (isStaticHost) {
+    try {
+      const result = await mockDispatch(method, path, { body, query });
+      const elapsedMs = performance.now() - startedAt;
+      const queryStr = query && Object.keys(query).length > 0 ? `?${new URLSearchParams(query).toString()}` : "";
+      publishTrace({
+        method,
+        path: `${BASE}${path}${queryStr}`,
+        status: 200,
+        ms: elapsedMs,
+        ok: true
+      });
+      return result;
+    } catch (err) {
+      const elapsedMs = performance.now() - startedAt;
+      const status = err.status || 400;
+      const queryStr = query && Object.keys(query).length > 0 ? `?${new URLSearchParams(query).toString()}` : "";
+      publishTrace({
+        method,
+        path: `${BASE}${path}${queryStr}`,
+        status,
+        ms: elapsedMs,
+        ok: false
+      });
+      throw new ApiError(status, err);
+    }
+  }
+
+  const url = buildUrl(path, query);
 
   let response;
   try {
@@ -65,8 +113,14 @@ async function request(method, path, { body, query, signal } = {}) {
       body: body ? JSON.stringify(body) : undefined
     });
   } catch (networkError) {
-    publishTrace({ method, path: url.pathname + url.search, status: 0, ms: performance.now() - startedAt, ok: false });
-    throw new ApiError(0, { detail: "No hay conexión con el servidor.", code: "network_error" });
+    // Backend offline: conmuta con gracia al motor de dominio en memoria
+    isStaticHost = true;
+    return request(method, path, { body, query, signal });
+  }
+
+  if (response.status === 404) {
+    isStaticHost = true;
+    return request(method, path, { body, query, signal });
   }
 
   const elapsedMs = performance.now() - startedAt;

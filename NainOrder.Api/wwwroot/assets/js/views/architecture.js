@@ -5,7 +5,7 @@
  */
 
 import { html, icon, raw, render, $, delegate } from "../dom.js";
-import { api, onTrace, traceHistory } from "../api.js";
+import { api, onTrace, traceHistory, isDemoMode } from "../api.js";
 import { toastError } from "../toast.js";
 import { fmtDuration, statusLabel } from "../format.js";
 
@@ -95,9 +95,13 @@ const markup = (stateMachine) => html`
         traza real de las llamadas que esta interfaz hace contra la API.
       </p>
     </div>
-    <a class="btn" href="/swagger" target="_blank" rel="noopener">
-      ${raw(icon("book", { size: 15 }))} Abrir Swagger ${raw(icon("external", { size: 13 }))}
-    </a>
+    ${isDemoMode()
+      ? html`<a class="btn" href="https://github.com/Nain9Dev/NainOrder" target="_blank" rel="noopener">
+          ${raw(icon("book", { size: 15 }))} Código en GitHub ${raw(icon("external", { size: 13 }))}
+        </a>`
+      : html`<a class="btn" href="/swagger" target="_blank" rel="noopener">
+          ${raw(icon("book", { size: 15 }))} Abrir Swagger ${raw(icon("external", { size: 13 }))}
+        </a>`}
   </section>
 
   <div class="grid grid--layers">

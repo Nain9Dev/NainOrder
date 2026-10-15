@@ -1,7 +1,7 @@
 /** Arranque de la aplicación: shell, navegación, tema, paleta de comandos y estado global. */
 
 import { html, icon, raw, $, delegate } from "./dom.js";
-import { api } from "./api.js";
+import { api, isDemoMode, resetDemoDatabase } from "./api.js";
 import { defineRoute, onRouteChange, startRouter, navigate, currentPath } from "./router.js";
 import { getState, setState, subscribe, setActiveOrder, clearActiveOrder } from "./state.js";
 import { openOrderPanel } from "./order-panel.js";
@@ -157,10 +157,20 @@ const commands = () => [
     }
   },
   {
-    label: "Abrir documentación Swagger",
+    label: "Reiniciar datos de la demo",
+    icon: "refresh",
+    hint: "Restaura el catálogo y pedidos iniciales",
+    run: () => {
+      resetDemoDatabase();
+      toast({ title: "Datos reiniciados", text: "Catálogo y pedidos restaurados al estado inicial.", variant: "info" });
+      setTimeout(() => window.location.reload(), 450);
+    }
+  },
+  {
+    label: isDemoMode() ? "Ver código en GitHub" : "Abrir documentación Swagger",
     icon: "book",
-    hint: "/swagger",
-    run: () => window.open("/swagger", "_blank", "noopener")
+    hint: isDemoMode() ? "Repositorio C#" : "/swagger",
+    run: () => window.open(isDemoMode() ? "https://github.com/Nain9Dev/NainOrder" : "/swagger", "_blank", "noopener")
   },
   {
     label: "Cambiar tema",
@@ -281,6 +291,15 @@ const monitorHealth = () => {
   const node = $("[data-health]");
 
   const check = async () => {
+    if (isDemoMode()) {
+      node.dataset.painted = "true";
+      node.innerHTML = html`
+        <span class="pulse-dot"></span> Demo interactiva (Navegador)
+      `;
+      setState({ apiHealthy: true });
+      return;
+    }
+
     let healthy = true;
     try {
       const response = await fetch("/health", { cache: "no-store" });
@@ -380,4 +399,4 @@ const boot = async () => {
 boot();
 
 // Superficie mínima para navegar por consola o desde un enlace profundo externo.
-window.NainOrder = { navigate, currentPath };
+window.NainOrder = { navigate, currentPath, isDemoMode, resetDemoDatabase };

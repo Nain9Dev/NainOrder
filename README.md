@@ -1,6 +1,7 @@
 # NainOrder
 
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
+[![Demo Online](https://img.shields.io/badge/demo-online-blueviolet?style=flat&logo=githubpages&logoColor=white)](https://nain9dev.github.io/NainOrder/)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Tests](https://img.shields.io/badge/tests-52%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
@@ -8,6 +9,8 @@
 Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
 DDD táctico y CQRS en el lado de lectura. Incluye un **panel de cliente propio** servido por
 la misma aplicación, sin proceso de compilación ni dependencias de Node.
+
+> **Demo interactiva online:** Puedes probar el panel directamente en [nain9dev.github.io/NainOrder](https://nain9dev.github.io/NainOrder/) sin necesidad de clonar ni ejecutar nada localmente.
 
 Un único `dotnet run` levanta la API, la documentación y la interfaz en `http://localhost:8170`.
 
