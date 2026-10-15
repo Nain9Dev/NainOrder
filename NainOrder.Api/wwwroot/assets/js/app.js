@@ -40,7 +40,9 @@ const applyTheme = (theme) => {
    Shell
    -------------------------------------------------------------------------- */
 const shell = () => html`
+  <nain-ecosystem-bar current-project="NainOrder"></nain-ecosystem-bar>
   <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
 
   <div class="app" data-nav-open="false">
     <div class="nav-scrim" data-action="close-nav" aria-hidden="true"></div>

@@ -6,7 +6,9 @@
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   min-height: 100dvh;
+  padding-top: 38px;
 }
+
 
 /* El velo solo existe cuando la barra lateral se convierte en cajón deslizante;
    en escritorio debe salir del flujo para no ocupar una celda de la retícula. */
