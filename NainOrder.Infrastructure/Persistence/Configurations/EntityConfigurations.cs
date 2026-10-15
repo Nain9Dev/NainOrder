@@ -18,6 +18,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.Reference).IsRequired().HasMaxLength(32);
         builder.Property(o => o.Status).HasConversion<int>();
         builder.Property(o => o.TotalAmount).HasConversion<MoneyConverter>();
+        builder.Property(o => o.Version).IsConcurrencyToken();
 
         builder.HasMany(o => o.Items)
                .WithOne()

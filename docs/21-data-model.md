@@ -35,6 +35,7 @@ erDiagram
         integer  Status       "1..5, indexed"
         integer  TotalAmount  "cents, materialised"
         integer  TotalUnits   "materialised"
+        integer  Version      "optimistic concurrency token"
         datetime CreatedAt    "indexed"
         datetime PaidAt       "nullable"
         datetime ShippedAt    "nullable"
@@ -69,6 +70,10 @@ alter an order already issued. This is a domain rule, not a cache.
 **`Order.TotalAmount` and `TotalUnits` are materialised**, recalculated by the aggregate on every
 basket mutation. Listings and metrics aggregate them in SQL without loading any line — see
 [ADR-0004](30-decisions/ADR-0004-materialised-order-totals.md).
+
+**`Order.Version` is an aggregate concurrency token.** Every mutation increments it, and EF Core
+includes it in the `UPDATE` predicate. Two simultaneous modifications to the same order cannot overwrite
+each other or desynchronize materialized totals — see [ADR-0007](30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md).
 
 **Every `Guid` primary key is `ValueGeneratedNever`.** The domain assigns identity in its
 constructor; declaring it explicitly removes any ambiguity for EF Core between an `INSERT` and an

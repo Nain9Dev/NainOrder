@@ -82,6 +82,25 @@ public class DomainInvariantProperties
     }
 
     [Property]
+    public void Every_order_mutation_moves_the_concurrency_token_forward(int seed)
+    {
+        var order = new Order(Guid.NewGuid());
+        var v0 = order.Version;
+
+        var productId = Guid.NewGuid();
+        order.AddItem(productId, "Producto", "NO-P-001", Price(seed), Units(seed, 10));
+        Assert.True(order.Version > v0);
+
+        var v1 = order.Version;
+        order.ChangeItemQuantity(productId, Units(seed, 10) + 5);
+        Assert.True(order.Version > v1);
+
+        var v2 = order.Version;
+        order.RemoveItem(productId);
+        Assert.True(order.Version > v2);
+    }
+
+    [Property]
     public void The_order_total_always_equals_the_sum_of_its_lines(int[] seeds)
     {
         var order = new Order(Guid.NewGuid());

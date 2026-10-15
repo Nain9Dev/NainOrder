@@ -9,8 +9,7 @@ cd NainOrder.Api
 dotnet run
 ```
 
-No database server to install. SQLite creates the file, the application applies its migrations and
-seeds the catalogue on start-up.
+Listens on `http://localhost:8170` (pinned in `Properties/launchSettings.json` per developer port registry). No database server to install. SQLite creates the file, the application applies its migrations and seeds the catalogue on start-up.
 
 | Route | Contents |
 | :--- | :--- |

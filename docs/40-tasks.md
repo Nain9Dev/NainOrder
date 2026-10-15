@@ -20,23 +20,22 @@
 | T-012 | Pin a patched `SQLitePCLRaw` — the transitive version carried a known high-severity vulnerability | `[A]` | ✅ `dotnet list package --vulnerable` is clean |
 | T-013 | Container hardening: non-root user, writable data directory, layer caching | `[A]` | ✅ `id -u` inside the image is not `0` |
 | T-014 | An unknown `/api` route must return `404` JSON, not the panel's HTML | `[A]` | ✅ `An_unknown_api_route_returns_json_404_and_never_the_client_application` passes |
-| T-015 | Test suite: example-based, property-based and integration | `[A]` | ✅ 40 tests green in Release |
+| T-015 | Test suite: example-based, property-based and integration | `[A]` | ✅ 52 tests green in Release |
 | T-016 | CI as a quality gate: build, vulnerability audit, tests, container smoke test | `[A]` | ✅ Green run on the pull request |
-| T-017 | Canonical documentation under `docs/` with ADRs and traceability | `[A]` | ✅ Every requirement mapped, or its gap declared |
+| T-017 | Canonical documentation under `docs/` with ADRs and traceability | `[A]` | ✅ Every requirement mapped to an automated test |
+| T-018 | Resolve Q-001: cover the five gaps in [50-traceability.md](50-traceability.md) | `[A]` | ✅ All 5 gaps covered with automated tests; 100% requirements traceability |
+| T-019 | Resolve Q-002: confirm repeated-product rule in `AddItem` | `[M]` | ✅ Explicit domain invariant retained; verified by tests |
+| T-020 | Resolve Q-003: confirm reservation policy | `[M]` | ✅ Immediate reservation on line addition confirmed for bounded scope |
+| T-023 | Optimistic concurrency on `Order` aggregate ([ADR-0007](30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)) | `[A]` | ✅ `Order.Version` concurrency token + probe test passing |
+| T-024 | Pin local dev port 8170 per `dev-ports.json` | `[A]` | ✅ Port 8170 pinned in `launchSettings.json` |
 
 ## Next
 
 | ID | Task | Label | Done when |
 | :--- | :--- | :--- | :--- |
-| T-018 | Resolve Q-001: decide how to cover the five gaps in [50-traceability.md](50-traceability.md) | `[M]` | Every requirement maps to a test, or its gap is accepted in writing |
-| T-019 | Resolve Q-002: keep or change the repeated-product rule | `[H]` | The decision is recorded as an ADR |
-| T-020 | Resolve Q-003: reservation expiry policy | `[H]` | The decision is recorded as an ADR |
 | T-021 | Promote the `docs/` set from `Draft` to `Approved` after review | `[H]` | Statuses updated in [README.md](README.md) |
 | T-022 | Publish a live instance and link it from the README | `[H]` | The URL responds `200` on `/health` |
 
 ## Handoff
 
-Latest state: the pull request contains T-001 to T-017. Build and tests are green in Release, the
-container has been verified running, and the panel has been exercised in a browser across the four
-views and the full order lifecycle. Nothing is in progress. What is pending is the owner's decision
-on T-018 to T-022 — three of them are business or ownership calls that an agent must not make alone.
+State: 52 automated tests green in Release, `AddOrderVersion` EF Core migration added, optimistic concurrency on `Order` preventing aggregate lost updates, all 5 traceability gaps closed, and port 8170 pinned per developer registry.

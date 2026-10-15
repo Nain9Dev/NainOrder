@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · last verified against a green run of `dotnet test NainOrder.slnx -c Release`
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (52/52 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -11,8 +11,11 @@ Test suites:
 | :--- | :--- | :--- |
 | `Domain.OrderStateMachineTests` | Example-based | The aggregate in isolation, with no database |
 | `Domain.DomainInvariantProperties` | Property-based (FsCheck) | Hundreds of generated cases per run, searching for a counterexample |
+| `Application.StockLevelsTests` | Theory/Boundary | Stock level classification and threshold boundaries |
 | `Api.OrderFlowTests` | Integration over HTTP | The real application with its migrations and middleware |
 | `Api.ConcurrencyTests` | Integration, concurrent | Simultaneous requests competing for the same units |
+| `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
+| `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
 
 ## Catalogue
 
@@ -21,14 +24,14 @@ Test suites:
 | REQ-001 | `OrderFlowTests.A_duplicated_sku_is_rejected_with_a_conflict` |
 | REQ-002 | `DomainInvariantProperties.Prices_are_always_stored_rounded_to_two_decimals` |
 | REQ-003 | `DomainInvariantProperties.A_rejected_removal_does_not_touch_the_stock`, `Stock_never_goes_negative_whatever_the_sequence_of_removals` |
-| REQ-004 | *Not covered by an automated test.* Classification lives in `StockLevels.Classify`; the panel renders it. Logged in [11-open-questions.md](11-open-questions.md). |
+| REQ-004 | `StockLevelsTests.Classify_maps_stock_quantities_to_expected_classification` |
 
 ## Customers
 
 | Requirement | Test |
 | :--- | :--- |
 | REQ-010 | `DomainInvariantProperties.A_customer_email_is_always_normalised_to_lowercase` |
-| REQ-011 | *Not covered by an automated test.* Same shape as REQ-001, which is covered. Logged in [11-open-questions.md](11-open-questions.md). |
+| REQ-011 | `OrderFlowTests.A_duplicated_customer_email_is_rejected_with_a_conflict` |
 | REQ-012 | `OrderStateMachineTests.An_order_always_needs_a_customer` |
 
 ## Order basket
@@ -59,8 +62,8 @@ Test suites:
 
 | Requirement | Test |
 | :--- | :--- |
-| REQ-040 | `ConcurrencyTests.Concurrent_reservations_never_oversell_the_available_stock`, `Concurrent_changes_to_the_same_order_keep_the_totals_consistent` |
-| REQ-041 | `DomainInvariantProperties.Every_mutation_moves_the_concurrency_token_forward` covers the mechanism. The `409 concurrency_conflict` path is exercised opportunistically by `ConcurrencyTests`, which accepts it as a valid outcome but cannot force it deterministically. Logged in [11-open-questions.md](11-open-questions.md). |
+| REQ-040 | `ConcurrencyTests.Concurrent_reservations_never_oversell_the_available_stock`, `ConcurrencyTests.Concurrent_changes_to_the_same_order_keep_the_totals_consistent` |
+| REQ-041 | `DomainInvariantProperties.Every_mutation_moves_the_concurrency_token_forward`, `DomainInvariantProperties.Every_order_mutation_moves_the_concurrency_token_forward`, and `OrderAggregateConcurrencyProbe.Two_concurrent_modifications_to_the_same_order_trigger_optimistic_concurrency_conflict_and_prevent_lost_updates` |
 | REQ-042 | `OrderFlowTests.Dashboard_metrics_stay_consistent_with_the_orders_that_produced_them` aggregates in SQL and compares against the orders that produced the figures. |
 
 ## HTTP contract
@@ -68,10 +71,10 @@ Test suites:
 | Requirement | Test |
 | :--- | :--- |
 | REQ-050 | Every error-path test asserts on `code`; `OrderFlowTests.An_unknown_order_returns_a_problem_details_404` also asserts the content type. |
-| REQ-051 | Covered for the `4xx` side by the error-path tests. The `500` suppression branch has no test. Logged in [11-open-questions.md](11-open-questions.md). |
+| REQ-051 | `GlobalExceptionHandlerTests.Unexpected_exception_in_production_is_sanitized_to_generic_500` and `GlobalExceptionHandlerTests.Business_exception_maps_to_4xx_with_machine_readable_context`. |
 | REQ-052 | `OrderFlowTests.An_unknown_api_route_returns_json_404_and_never_the_client_application`; CI additionally asserts it against the running container. |
 | REQ-053 | `OrderFlowTests.Invalid_payloads_are_rejected_before_reaching_the_domain` |
-| REQ-054 | `OrderFlowTests` exercises the list endpoint; the pagination metadata contract is verified in the panel but has no dedicated assertion. Logged in [11-open-questions.md](11-open-questions.md). |
+| REQ-054 | `OrderFlowTests.Order_list_endpoint_honors_pagination_contract_and_filters` exercises pagination parameters, count metadata, and database filters. |
 
 ## Delivery
 
@@ -84,6 +87,4 @@ Test suites:
 
 ## Gaps
 
-Five requirements are honestly marked as not covered above: REQ-004, REQ-011, REQ-041 (partially),
-REQ-051 (partially) and REQ-054 (partially). They are listed as open items rather than quietly
-mapped to a test that does not actually demonstrate them.
+None. Every requirement declared in [10-requirements.md](10-requirements.md) is covered by an automated test passing in the Release suite.

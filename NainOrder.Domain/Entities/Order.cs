@@ -46,6 +46,12 @@ public class Order
     public decimal TotalAmount { get; private set; }
     public int TotalUnits { get; private set; }
 
+    /// <summary>
+    /// Token de concurrencia optimista. Se incrementa en cada mutación para que dos
+    /// peticiones simultáneas no puedan sobrescribir el estado del pedido ni corromper sus totales.
+    /// </summary>
+    public int Version { get; private set; }
+
     /// <summary>Un pedido solo admite cambios en su cesta mientras no se haya cobrado.</summary>
     public bool IsEditable => Status == OrderStatus.PendingPayment;
 
@@ -61,6 +67,7 @@ public class Order
         Status = OrderStatus.PendingPayment;
         CreatedAt = DateTime.UtcNow;
         Reference = BuildReference(Id, CreatedAt);
+        Version = 1;
     }
 
     public static IReadOnlyCollection<OrderStatus> TransitionsFrom(OrderStatus status) =>
@@ -77,6 +84,7 @@ public class Order
 
         _items.Add(new OrderItem(Id, productId, productName, productSku, unitPrice, quantity));
         RecalculateTotals();
+        Version++;
     }
 
     /// <summary>
@@ -92,6 +100,7 @@ public class Order
 
         var delta = item.ChangeQuantity(newQuantity);
         RecalculateTotals();
+        Version++;
         return delta;
     }
 
@@ -105,6 +114,7 @@ public class Order
 
         _items.Remove(item);
         RecalculateTotals();
+        Version++;
         return item.Quantity;
     }
 
@@ -118,12 +128,14 @@ public class Order
 
         Status = OrderStatus.Paid;
         PaidAt = DateTime.UtcNow;
+        Version++;
     }
 
     public void MarkAsProcessing()
     {
         EnsureTransition(OrderStatus.Processing, "MarkAsProcessing");
         Status = OrderStatus.Processing;
+        Version++;
     }
 
     public void MarkAsShipped()
@@ -131,6 +143,7 @@ public class Order
         EnsureTransition(OrderStatus.Shipped, "MarkAsShipped");
         Status = OrderStatus.Shipped;
         ShippedAt = DateTime.UtcNow;
+        Version++;
     }
 
     /// <summary>
@@ -143,6 +156,7 @@ public class Order
 
         Status = OrderStatus.Cancelled;
         CancelledAt = DateTime.UtcNow;
+        Version++;
 
         return _items.Select(i => new StockRestoration(i.ProductId, i.Quantity)).ToList();
     }

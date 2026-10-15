@@ -2,14 +2,14 @@
 
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-40%20verdes-2ea44f)
+![Tests](https://img.shields.io/badge/tests-52%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
 
 Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
 DDD táctico y CQRS en el lado de lectura. Incluye un **panel de cliente propio** servido por
 la misma aplicación, sin proceso de compilación ni dependencias de Node.
 
-Un único `dotnet run` levanta la API, la documentación y la interfaz.
+Un único `dotnet run` levanta la API, la documentación y la interfaz en `http://localhost:8170`.
 
 > El objetivo del repositorio no es que confíes en lo que afirma, sino que puedas comprobarlo:
 > las reglas críticas están respaldadas por pruebas que las ejercitan, y cada decisión de diseño
@@ -24,10 +24,11 @@ Ninguna de estas afirmaciones se sostiene sola. Cada una tiene detrás una prueb
 | Afirmación | Cómo se demuestra |
 | :--- | :--- |
 | El stock no se puede sobrevender, ni siquiera con peticiones simultáneas | `ConcurrencyTests` lanza 16 reservas a la vez contra 6 unidades y comprueba que lo concedido más lo restante cuadra exactamente |
+| Las modificaciones simultáneas al mismo pedido no corrompen los totales | `OrderAggregateConcurrencyProbe` demuestra que dos contextos simultáneos mutando líneas del mismo pedido activan concurrencia optimista y protegen el total |
 | El stock nunca queda negativo con ninguna secuencia de operaciones | `DomainInvariantProperties` genera cientos de casos por ejecución buscando el contraejemplo |
 | Una reserva rechazada no toca el inventario | Los tests de error comparan el stock antes y después del rechazo |
 | Cancelar un pedido devuelve cada unidad al catálogo | `Cancelling_an_order_puts_the_reserved_stock_back` |
-| Un fallo de negocio es 4xx y uno técnico sigue siendo 500 | El contrato de error se comprueba en cada camino de fallo |
+| Un fallo de negocio es 4xx y uno técnico sigue siendo 500 sanitizado | `GlobalExceptionHandlerTests` y tests de integración comprueban la supresión de detalles internos fuera de desarrollo |
 | El artefacto que se despliega funciona | CI construye la imagen y la interroga en marcha: arranque, panel, OpenAPI, 404 de API y usuario no root |
 
 ```bash
@@ -35,8 +36,8 @@ dotnet test NainOrder.slnx -c Release
 ```
 
 La correspondencia completa entre cada requisito y la prueba que lo cubre está en
-[`docs/50-traceability.md`](docs/50-traceability.md) — **incluidos los cinco huecos que aún no
-están cubiertos**, declarados como tales en lugar de asignados a un test que no los demuestra.
+[`docs/50-traceability.md`](docs/50-traceability.md), con el 100% de los requisitos cubiertos por
+la suite automatizada.
 
 ---
 
@@ -86,6 +87,11 @@ agregación, y elimina el error de coma flotante en el redondeo de importes.
 **Concurrencia optimista sobre el stock.** `Product` lleva un token de versión declarado como
 `IsConcurrencyToken()`. Si dos peticiones simultáneas intentan reservar la última unidad, la
 segunda falla en el `UPDATE` y recibe un `409`, en lugar de sobrevender.
+
+**Concurrencia optimista sobre el agregado de pedido.** Del mismo modo que el catálogo protege el
+stock, `Order` lleva un token de versión declarado como `IsConcurrencyToken()`. Dos peticiones
+concurrentes mutando la cesta del mismo pedido no pueden provocar un *lost update* ni
+desincronizar los totales materializados ([ADR-0007](docs/30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)).
 
 **Unidad de trabajo explícita.** Los repositorios ya no confirman por su cuenta. Añadir una
 línea toca dos agregados —pedido y producto— y ambos se persisten dentro de la misma
@@ -154,17 +160,19 @@ dotnet run
 ### Tests
 
 ```bash
-dotnet test
+dotnet test NainOrder.slnx -c Release
 ```
 
-37 pruebas repartidas en tres niveles:
+52 pruebas repartidas en cuatro niveles:
 
 - **Ejemplo** — la máquina de estados, incluidas todas las transiciones que debe impedir.
 - **Propiedad** (FsCheck) — las invariantes aritméticas se comprueban contra cientos de casos
-  generados: el stock nunca queda negativo, una reserva rechazada no altera el inventario y el
-  total del pedido siempre coincide con la suma de sus líneas.
+  generados: el stock nunca queda negativo, una reserva rechazada no altera el inventario, el
+  total del pedido siempre coincide con la suma de sus líneas y los tokens de versión avanzan.
+- **Concurrencia multicontexto** — probes de carreras simultáneas demostrando el bloqueo y
+  la protección contra *lost updates* del motor EF Core sobre los agregados.
 - **Integración** — la aplicación real, con sus migraciones y su middleware, atacada por HTTP:
-  flujo completo de compra, caminos de error y entrega del panel y de Swagger.
+  flujo completo de compra, caminos de error, paginación, sanitización de 500 y entrega del panel y de Swagger.
 
 ### Contenedor
 
@@ -209,8 +217,8 @@ El repositorio sigue un flujo dirigido por especificación. La verdad estable de
 | [`10-requirements.md`](docs/10-requirements.md) | Requisitos `REQ-###` en notación EARS |
 | [`20-architecture.md`](docs/20-architecture.md) | Capas y recorrido de una petición, con diagramas Mermaid |
 | [`21-data-model.md`](docs/21-data-model.md) | Entidades, invariantes y restricciones del motor |
-| [`30-decisions/`](docs/30-decisions/) | Seis ADR con las alternativas descartadas y su porqué |
-| [`50-traceability.md`](docs/50-traceability.md) | Cada requisito y la prueba que lo demuestra |
+| [`30-decisions/`](docs/30-decisions/) | Siete ADR con las alternativas descartadas y su porqué |
+| [`50-traceability.md`](docs/50-traceability.md) | Cada requisito y la prueba que lo demuestra (100% cubierto) |
 | [`60-runbook.md`](docs/60-runbook.md) | Arranque, configuración, límites conocidos y recuperación |
 
 Las decisiones que más condicionan el diseño:
@@ -221,6 +229,8 @@ Las decisiones que más condicionan el diseño:
   optimista sobre el stock, para que dos peticiones no puedan vender la misma unidad.
 - **[ADR-0003](docs/30-decisions/ADR-0003-unit-of-work-owns-the-transaction.md)** — la frontera
   transaccional pertenece al caso de uso, no al repositorio.
+- **[ADR-0007](docs/30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)** — concurrencia
+  optimista sobre el agregado de pedido para blindar los totales materializados contra escrituras perdidas.
 
 ---
 

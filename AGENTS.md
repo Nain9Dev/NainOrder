@@ -48,6 +48,7 @@ its test is a defect:
 - A rejected reservation leaves the inventory untouched.
 - Cancelling an order returns every reserved unit to the catalogue.
 - An order total always equals the sum of its lines.
+- Concurrent modifications to the same order aggregate reject conflicting writers with optimistic concurrency and never produce lost updates.
 - A paid order's basket is frozen; a shipped order is terminal.
 - Money is persisted as integer cents, never as text or floating point.
 - A business failure is `4xx`; a technical failure is `500`. Never the reverse.

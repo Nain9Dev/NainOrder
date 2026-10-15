@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using NainOrder.Application.Common;
 using NainOrder.Application.DTOs;
 using NainOrder.Infrastructure.Persistence.Seeding;
 
@@ -281,5 +282,41 @@ public class OrderFlowTests : IClassFixture<NainOrderApiFactory>
             var (code, _) = await ReadProblemAsync(response);
             Assert.Equal("endpoint_not_found", code);
         }
+    }
+
+    [Fact]
+    public async Task A_duplicated_customer_email_is_rejected_with_a_conflict()
+    {
+        var email = $"dup-{Guid.NewGuid():N}@example.com";
+        var first = await _client.PostAsJsonAsync("/api/customers",
+            new CreateCustomerRequest("Cliente Inicial", email), Json);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var duplicate = await _client.PostAsJsonAsync("/api/customers",
+            new CreateCustomerRequest("Cliente Duplicado", email), Json);
+
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        var (code, _) = await ReadProblemAsync(duplicate);
+        Assert.Equal("duplicate_email", code);
+    }
+
+    [Fact]
+    public async Task Order_list_endpoint_honors_pagination_contract_and_filters()
+    {
+        await NewOrderAsync();
+
+        var paged = await _client.GetFromJsonAsync<PagedResult<OrderSummaryDto>>("/api/orders?page=1&pageSize=5", Json);
+
+        Assert.NotNull(paged);
+        Assert.Equal(1, paged.Page);
+        Assert.Equal(5, paged.PageSize);
+        Assert.True(paged.TotalCount > 0);
+        Assert.True(paged.TotalPages >= 1);
+        Assert.NotEmpty(paged.Items);
+        Assert.True(paged.Items.Count <= 5);
+
+        var pendingOnly = await _client.GetFromJsonAsync<PagedResult<OrderSummaryDto>>("/api/orders?status=PendingPayment&page=1&pageSize=10", Json);
+        Assert.NotNull(pendingOnly);
+        Assert.All(pendingOnly.Items, order => Assert.Equal("PendingPayment", order.Status));
     }
 }
