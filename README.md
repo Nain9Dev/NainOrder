@@ -65,7 +65,23 @@ una regla nueva en el dominio se refleja en la interfaz sin tocar el front.
 
 ---
 
-## Arquitectura
+## Arquitectura y Diagrama C4
+
+```mermaid
+graph TD
+    Client["Navegador / Panel Web Propio<br/>(Vanilla JS / Sin dependencias Node)"]
+    API["NainOrder.Api<br/>(Controladores REST / RFC 7807 ProblemDetails)"]
+    AppLayer["NainOrder.Application<br/>(Casos de uso / CQRS lectura / DTOs)"]
+    DomainLayer["NainOrder.Domain<br/>(Agregados Order y Product / Máquina de estados)"]
+    InfraLayer["NainOrder.Infrastructure<br/>(EF Core / SQLite / ValueConverters)"]
+    DB[("SQLite Database<br/>(Persistencia atómica en céntimos enteros)")]
+
+    Client -->|HTTP / JSON| API
+    API --> AppLayer
+    AppLayer --> DomainLayer
+    AppLayer --> InfraLayer
+    InfraLayer -->|Unidad de trabajo / Transacción atómica| DB
+```
 
 Cuatro proyectos con las dependencias apuntando siempre hacia dentro:
 
@@ -79,6 +95,7 @@ Cuatro proyectos con las dependencias apuntando siempre hacia dentro:
 `NainOrder.Domain` no referencia ningún paquete: ni EF Core, ni ASP.NET, ni inyección de
 dependencias. Esa restricción es lo que mantiene el modelo de negocio verificable de forma
 aislada, y es la que comprueban los tests de dominio.
+
 
 ### Decisiones que merecen explicación
 
