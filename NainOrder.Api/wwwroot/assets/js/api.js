@@ -18,6 +18,7 @@ const BASE = "/api";
 let isStaticHost =
   typeof window !== "undefined" &&
   (window.location.hostname.endsWith("github.io") ||
+   window.location.hostname.endsWith("naindev.com") ||
    window.location.protocol === "file:" ||
    Boolean(window.__NAINORDER_FORCE_MOCK__));
 
