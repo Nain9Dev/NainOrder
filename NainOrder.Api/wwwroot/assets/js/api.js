@@ -59,6 +59,18 @@ const publishTrace = (entry) => {
   traceLog.push(entry);
   if (traceLog.length > 100) traceLog.shift();
   listeners.forEach((listener) => listener(entry));
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("nain:telemetry", {
+      detail: {
+        type: entry.method === "GET" ? "Query" : "Command",
+        name: `${entry.method} ${entry.path}`,
+        latencyMs: Math.round(entry.ms),
+        status: entry.status,
+        payload: { path: entry.path, ok: entry.ok, latencyMs: Math.round(entry.ms), runtime: isStaticHost ? "InMemoryDomainEngine" : "DotNet10CleanArch" }
+      }
+    }));
+  }
 };
 
 const buildUrl = (path, query) => {
