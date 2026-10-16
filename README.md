@@ -1,3 +1,9 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.svg">
+  <img alt="NainOrder Architectural Blueprint" src="docs/assets/banner-dark.svg" width="100%">
+</picture>
+
 # NainOrder
 
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
