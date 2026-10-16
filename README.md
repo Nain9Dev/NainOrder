@@ -2,6 +2,9 @@
 
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![Demo Online](https://img.shields.io/badge/demo-online-blueviolet?style=flat&logo=githubpages&logoColor=white)](https://order.naindev.com/)
+[![Ecosystem Status](https://img.shields.io/badge/status-100%25%20operational-success)](https://status.naindev.com)
+[![Engineering Handbook](https://img.shields.io/badge/paved%20road-C4%20%2B%20Clean%20Arch-blue)](https://github.com/Nain9Dev/engineering-handbook)
+[![Cost](https://img.shields.io/badge/cost-0.00_%E2%82%AC-22c55e)](https://github.com/Nain9Dev/engineering-handbook/blob/main/governance/zero-cost-philosophy.md)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Tests](https://img.shields.io/badge/tests-52%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
