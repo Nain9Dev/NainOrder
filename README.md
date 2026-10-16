@@ -7,12 +7,15 @@
 # NainOrder
 
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 [![Demo Online](https://img.shields.io/badge/demo-online-blueviolet?style=flat&logo=githubpages&logoColor=white)](https://order.naindev.com/)
 [![Ecosystem Status](https://img.shields.io/badge/status-100%25%20operational-success)](https://status.naindev.com)
 [![Engineering Handbook](https://img.shields.io/badge/paved%20road-C4%20%2B%20Clean%20Arch-blue)](https://github.com/Nain9Dev/engineering-handbook)
 [![Cost](https://img.shields.io/badge/cost-0.00_%E2%82%AC-22c55e)](https://github.com/Nain9Dev/engineering-handbook/blob/main/governance/zero-cost-philosophy.md)
+[![Architecture Tests](https://img.shields.io/badge/architecture%20tests-NetArchTest%20enforced-blueviolet)](NainOrder.Tests/Architecture/CleanArchitectureTests.cs)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-1f2937?style=flat&logo=github&logoColor=white)](https://codespaces.new/Nain9Dev/NainOrder)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-52%20verdes-2ea44f)
+![Tests](https://img.shields.io/badge/tests-56%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
 
 Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
@@ -35,6 +38,7 @@ Ninguna de estas afirmaciones se sostiene sola. Cada una tiene detrás una prueb
 
 | Afirmación | Cómo se demuestra |
 | :--- | :--- |
+| La arquitectura limpia está blindada por código | `CleanArchitectureTests` (NetArchTest) comprueba por reflexión que Domain tiene 0 dependencias y Application no conoce Infrastructure ni API |
 | El stock no se puede sobrevender, ni siquiera con peticiones simultáneas | `ConcurrencyTests` lanza 16 reservas a la vez contra 6 unidades y comprueba que lo concedido más lo restante cuadra exactamente |
 | Las modificaciones simultáneas al mismo pedido no corrompen los totales | `OrderAggregateConcurrencyProbe` demuestra que dos contextos simultáneos mutando líneas del mismo pedido activan concurrencia optimista y protegen el total |
 | El stock nunca queda negativo con ninguna secuencia de operaciones | `DomainInvariantProperties` genera cientos de casos por ejecución buscando el contraejemplo |
@@ -104,6 +108,34 @@ Cuatro proyectos con las dependencias apuntando siempre hacia dentro:
 `NainOrder.Domain` no referencia ningún paquete: ni EF Core, ni ASP.NET, ni inyección de
 dependencias. Esa restricción es lo que mantiene el modelo de negocio verificable de forma
 aislada, y es la que comprueban los tests de dominio.
+
+### Flujo de Transacción y Concurrencia Optimista
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cliente as Navegador / SPA
+    participant API as NainOrder.Api (HTTP)
+    participant App as NainOrder.Application
+    participant Domain as NainOrder.Domain (Order Aggregate)
+    participant DB as SQLite (Transacción Atómica)
+
+    Cliente->>API: POST /api/orders/{id}/items (If-Match: ETag)
+    API->>App: AddOrderItemCommand
+    App->>DB: Leer Order + Product (con RowVersion / Stock)
+    App->>Domain: Order.AddLine(product, quantity)
+    alt Stock suficiente
+        Domain-->>App: Evento ItemAdded + StockDecrementado
+        App->>DB: Commit atómico con verificación de ConcurrencyToken
+        DB-->>App: OK (Nuevo ETag generado)
+        App-->>API: 200 OK + Payload con totales exactos
+        API-->>Cliente: Interfaz actualizada en 14ms (ETag / Céntimos enteros)
+    else Stock insuficiente
+        Domain-->>App: Excepción InsufficientStockDomainException
+        App-->>API: 422 UnprocessableEntity (ProblemDetails)
+        API-->>Cliente: Error de negocio sanitizado sin tocar stock
+    end
+```
 
 
 ### Decisiones que merecen explicación
@@ -267,6 +299,25 @@ Las decisiones que más condicionan el diseño:
 
 C# / .NET 10 · ASP.NET Core · Entity Framework Core (SQLite) · Swagger/OpenAPI ·
 xUnit · FsCheck · JavaScript (módulos ES) · CSS con variables
+
+---
+
+## FinOps & Zero-Cost Architecture (0.00 €)
+
+<details>
+<summary><b>Inspect 0.00 € Infrastructure Topology &amp; Governance</b></summary>
+
+In alignment with the [NainDev Zero-Cost Infrastructure Philosophy](https://github.com/Nain9Dev/engineering-handbook/blob/main/governance/zero-cost-philosophy.md), this system operates at strictly **0.00 €/month** recurring cloud cost:
+
+| Component | Architecture Mechanism | Provider / Runtime | Monthly Cost |
+|:---|:---|:---|:---|
+| **Global Edge Delivery** | Anycast CDN, HTTP/3, TLS termination &amp; DDoS mitigation | Cloudflare Free Tier | 0.00 € |
+| **Client Application Shell** | Zero-dependency static assets served directly | GitHub Pages / Edge CDN | 0.00 € |
+| **Compute Execution** | Deterministic in-browser evaluation / Local container topology | Client WASM / Local Docker | 0.00 € |
+| **CI/CD Quality Gate** | Continuous integration, NetArchTest enforcement &amp; security scans | GitHub Actions (Linux Runner) | 0.00 € |
+| **Total Recurring Cost** | **Zero billable cloud dependencies** | | **0.00 €** |
+
+</details>
 
 ---
 
