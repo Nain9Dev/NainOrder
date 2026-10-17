@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="NainOrder.Api/NainOrder.Api.csproj" />
   <Project Path="NainOrder.Application/NainOrder.Application.csproj" />
+  <Project Path="NainOrder.Benchmarks/NainOrder.Benchmarks.csproj" />
   <Project Path="NainOrder.Domain/NainOrder.Domain.csproj" />
   <Project Path="NainOrder.Infrastructure/NainOrder.Infrastructure.csproj" />
   <Project Path="NainOrder.Tests/NainOrder.Tests.csproj" />

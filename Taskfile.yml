@@ -20,3 +20,8 @@ tasks:
     desc: "Verify code style and formatting"
     cmds:
       - dotnet format --verify-no-changes
+
+  benchmark:
+    desc: "Execute BenchmarkDotNet performance and memory profiling"
+    cmds:
+      - dotnet run --project NainOrder.Benchmarks -c Release -- --filter *

@@ -16,6 +16,7 @@ Canonical documentation for NainOrder. Numbered by lifecycle phase. Feature work
 | Development | [41-blockers.md](41-blockers.md) | Active |
 | Testing | [50-traceability.md](50-traceability.md) | Active |
 | Deployment | [60-runbook.md](60-runbook.md) | Draft |
+| Contract | [openapi.json](openapi.json) · [Interactive Reference](api-reference.html) | Active |
 | Maintenance | [90-changelog.md](90-changelog.md) | Active |
 
 ## How to work here
