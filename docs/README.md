@@ -10,6 +10,7 @@ Canonical documentation for NainOrder. Numbered by lifecycle phase. Feature work
 | Analysis | [11-open-questions.md](11-open-questions.md) | Open |
 | Design | [20-architecture.md](20-architecture.md) | Draft |
 | Design | [21-data-model.md](21-data-model.md) | Draft |
+| Design | [22-threat-model.md](22-threat-model.md) | Active |
 | Design | [30-decisions/](30-decisions/) | see each ADR |
 | Development | [40-tasks.md](40-tasks.md) | Active |
 | Development | [41-blockers.md](41-blockers.md) | Active |

@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: "Run backend API locally with hot reload"
+    cmds:
+      - dotnet watch --project NainOrder.Api run
+
+  test:
+    desc: "Execute all unit, property-based, and architecture fitness tests"
+    cmds:
+      - dotnet test NainOrder.Tests/NainOrder.Tests.csproj -c Release --verbosity normal
+
+  build:
+    desc: "Build release binaries"
+    cmds:
+      - dotnet build NainOrder.slnx -c Release
+
+  lint:
+    desc: "Verify code style and formatting"
+    cmds:
+      - dotnet format --verify-no-changes

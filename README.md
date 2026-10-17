@@ -15,7 +15,7 @@
 [![Architecture Tests](https://img.shields.io/badge/architecture%20tests-NetArchTest%20enforced-blueviolet)](NainOrder.Tests/Architecture/CleanArchitectureTests.cs)
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-1f2937?style=flat&logo=github&logoColor=white)](https://codespaces.new/Nain9Dev/NainOrder)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-56%20verdes-2ea44f)
+![Tests](https://img.shields.io/badge/tests-57%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
 
 Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
