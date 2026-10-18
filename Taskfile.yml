@@ -25,3 +25,8 @@ tasks:
     desc: "Execute BenchmarkDotNet performance and memory profiling"
     cmds:
       - dotnet run --project NainOrder.Benchmarks -c Release -- --filter *
+
+  client:
+    desc: "Generate strict TypeScript client SDK from OpenAPI specification"
+    cmds:
+      - node scripts/generate-client.mjs
