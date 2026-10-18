@@ -19,6 +19,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 
 // Errores uniformes RFC 7807 en toda la superficie de la API.
 builder.Services.AddProblemDetails(options =>
@@ -115,6 +116,7 @@ app.UseStaticFiles(new StaticFileOptions
 if (allowedOrigins.Length > 0) app.UseCors(CorsPolicies.Default);
 
 app.UseRateLimiter();
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>
