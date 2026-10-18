@@ -150,7 +150,7 @@ public class AnalyticsRepository : IAnalyticsRepository
         var byDay = new Dictionary<DateOnly, (int Orders, long Cents)>();
 
         await using var command = CreateCommand(connection, sql);
-        AddParameter(command, "$from", from.ToString("yyyy-MM-dd"));
+        AddParameter(command, "$from", from.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))

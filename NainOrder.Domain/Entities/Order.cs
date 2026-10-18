@@ -1,5 +1,6 @@
 using NainOrder.Domain.Enums;
 using NainOrder.Domain.Exceptions;
+using NainOrder.Domain.Primitives;
 
 namespace NainOrder.Domain.Entities;
 
@@ -7,14 +8,14 @@ namespace NainOrder.Domain.Entities;
 /// Raíz de agregado del pedido. Encapsula la máquina de estados y sus líneas: los items
 /// solo pueden mutarse a través de esta clase, nunca desde la colección expuesta.
 /// </summary>
-public class Order
+public class Order : AggregateRoot<Guid>
 {
     /// <summary>
     /// Transiciones permitidas. Es la única fuente de verdad de la máquina de estados:
     /// la API la publica tal cual para que el cliente no tenga que duplicar la regla.
     /// </summary>
-    private static readonly IReadOnlyDictionary<OrderStatus, OrderStatus[]> AllowedTransitions =
-        new Dictionary<OrderStatus, OrderStatus[]>
+    private static readonly Dictionary<OrderStatus, OrderStatus[]> AllowedTransitions =
+        new()
         {
             [OrderStatus.PendingPayment] = [OrderStatus.Paid, OrderStatus.Cancelled],
             [OrderStatus.Paid] = [OrderStatus.Processing, OrderStatus.Cancelled],
@@ -23,7 +24,6 @@ public class Order
             [OrderStatus.Cancelled] = []
         };
 
-    public Guid Id { get; private set; }
     public Guid CustomerId { get; private set; }
 
     /// <summary>Referencia legible del pedido, pensada para usarse en soporte y facturación.</summary>
@@ -57,12 +57,11 @@ public class Order
 
     private Order() { }
 
-    public Order(Guid customerId)
+    public Order(Guid customerId) : base(Guid.NewGuid())
     {
         if (customerId == Guid.Empty)
             throw new InvalidDomainDataException(nameof(customerId), "A customer is required to open an order.");
 
-        Id = Guid.NewGuid();
         CustomerId = customerId;
         Status = OrderStatus.PendingPayment;
         CreatedAt = DateTime.UtcNow;

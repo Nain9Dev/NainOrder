@@ -5,7 +5,7 @@ using NainOrder.Domain.Entities;
 
 namespace NainOrder.Application.Services;
 
-public class CustomerService : ICustomerService
+public sealed class CustomerService : ICustomerService
 {
     private readonly ICustomerRepository _customerRepository;
     private readonly IUnitOfWork _unitOfWork;

@@ -69,7 +69,7 @@ public class DemoController : ControllerBase
     }
 
     private static async Task<T> TrackAsync<T>(
-        ICollection<SimulationStepDto> steps, string operation, string explanation, Func<Task<T>> action)
+        List<SimulationStepDto> steps, string operation, string explanation, Func<Task<T>> action)
     {
         var stepWatch = Stopwatch.StartNew();
         var result = await action();

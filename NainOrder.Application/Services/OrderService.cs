@@ -12,7 +12,7 @@ namespace NainOrder.Application.Services;
 /// cada decisión en el agregado <see cref="Order"/> y en <see cref="Product"/>, y se
 /// limita a coordinar agregados, transacción y proyección a DTO.
 /// </summary>
-public class OrderService : IOrderService
+public sealed class OrderService : IOrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;

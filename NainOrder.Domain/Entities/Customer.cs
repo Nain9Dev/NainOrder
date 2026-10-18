@@ -1,25 +1,24 @@
 using NainOrder.Domain.Exceptions;
+using NainOrder.Domain.Primitives;
 
 namespace NainOrder.Domain.Entities;
 
 /// <summary>Cliente que emite pedidos. El email actúa como clave natural del agregado.</summary>
-public class Customer
+public class Customer : Entity<Guid>
 {
     public const int MaxNameLength = 100;
     public const int MaxEmailLength = 150;
 
-    public Guid Id { get; private set; }
     public string Name { get; private set; } = null!;
     public string Email { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
 
     private Customer() { }
 
-    public Customer(string name, string email)
+    public Customer(string name, string email) : base(Guid.NewGuid())
     {
         Name = NormalizeName(name);
         Email = NormalizeEmail(email);
-        Id = Guid.NewGuid();
         CreatedAt = DateTime.UtcNow;
     }
 

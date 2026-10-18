@@ -1,4 +1,5 @@
 using NainOrder.Domain.Exceptions;
+using NainOrder.Domain.Primitives;
 
 namespace NainOrder.Domain.Entities;
 
@@ -7,14 +8,13 @@ namespace NainOrder.Domain.Entities;
 /// esta clase puede modificar <see cref="StockQuantity"/>, de modo que la invariante
 /// "el stock nunca es negativo" no puede violarse desde ninguna capa superior.
 /// </summary>
-public class Product
+public class Product : Entity<Guid>
 {
     public const int MaxSkuLength = 50;
     public const int MaxNameLength = 200;
     public const int MaxCategoryLength = 60;
     public const int MaxDescriptionLength = 500;
 
-    public Guid Id { get; private set; }
     public string Sku { get; private set; } = null!;
     public string Name { get; private set; } = null!;
     public string Category { get; private set; } = DefaultCategory;
@@ -34,6 +34,7 @@ public class Product
 
     public Product(string sku, string name, decimal price, int initialStock,
                    string? category = null, string? description = null)
+        : base(Guid.NewGuid())
     {
         Sku = NormalizeRequired(sku, nameof(sku), MaxSkuLength).ToUpperInvariant();
         Name = NormalizeRequired(name, nameof(name), MaxNameLength);
@@ -45,7 +46,6 @@ public class Product
         if (initialStock < 0)
             throw new InvalidDomainDataException(nameof(initialStock), "Stock cannot be negative.");
 
-        Id = Guid.NewGuid();
         Price = decimal.Round(price, 2, MidpointRounding.AwayFromZero);
         StockQuantity = initialStock;
         Version = 1;

@@ -3,7 +3,7 @@ using NainOrder.Application.Interfaces;
 
 namespace NainOrder.Application.Services;
 
-public class DashboardService : IDashboardService
+public sealed class DashboardService : IDashboardService
 {
     /// <summary>Ventana temporal del gráfico de ingresos del panel.</summary>
     public const int TimelineDays = 14;

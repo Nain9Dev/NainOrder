@@ -11,7 +11,14 @@ public sealed record PagedResult<T>(
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "Convenience static factory for typed empty instances.")]
     public static PagedResult<T> Empty(int page, int pageSize) => new([], page, pageSize, 0);
+}
+
+/// <summary>Fábrica estática no genérica para instancias de páginas de resultados.</summary>
+public static class PagedResult
+{
+    public static PagedResult<T> Empty<T>(int page, int pageSize) => new([], page, pageSize, 0);
 }
 
 /// <summary>Parámetros de paginación normalizados: nunca dejan pasar valores fuera de rango.</summary>

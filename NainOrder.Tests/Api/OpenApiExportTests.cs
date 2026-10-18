@@ -5,6 +5,7 @@ namespace NainOrder.Tests.Api;
 
 public class OpenApiExportTests : IClassFixture<NainOrderApiFactory>
 {
+    private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
     private readonly HttpClient _client;
 
     public OpenApiExportTests(NainOrderApiFactory factory) => _client = factory.CreateClient();
@@ -17,7 +18,7 @@ public class OpenApiExportTests : IClassFixture<NainOrderApiFactory>
 
         var rawJson = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(rawJson);
-        var formattedJson = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        var formattedJson = JsonSerializer.Serialize(doc.RootElement, IndentedOptions);
 
         var docsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../docs/openapi.json"));
         var dir = Path.GetDirectoryName(docsPath);

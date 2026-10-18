@@ -1,4 +1,5 @@
 using NainOrder.Domain.Exceptions;
+using NainOrder.Domain.Primitives;
 
 namespace NainOrder.Domain.Entities;
 
@@ -6,11 +7,10 @@ namespace NainOrder.Domain.Entities;
 /// Línea de pedido. Congela el precio unitario en el momento de la compra: un cambio
 /// posterior de tarifa en el catálogo no debe alterar pedidos ya emitidos.
 /// </summary>
-public class OrderItem
+public class OrderItem : Entity<Guid>
 {
     public const int MaxQuantity = 10_000;
 
-    public Guid Id { get; private set; }
     public Guid OrderId { get; private set; }
     public Guid ProductId { get; private set; }
 
@@ -26,12 +26,12 @@ public class OrderItem
     private OrderItem() { }
 
     internal OrderItem(Guid orderId, Guid productId, string productName, string productSku, decimal unitPrice, int quantity)
+        : base(Guid.NewGuid())
     {
         EnsureValidQuantity(quantity);
         if (unitPrice < 0)
             throw new InvalidDomainDataException(nameof(unitPrice), "Unit price cannot be negative.");
 
-        Id = Guid.NewGuid();
         OrderId = orderId;
         ProductId = productId;
         ProductName = productName;

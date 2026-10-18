@@ -62,4 +62,35 @@ public sealed class CleanArchitectureTests
 
         Assert.True(result.IsSuccessful, $"Domain entities must not depend on EF Core or ASP.NET Core: {string.Join(", ", result.FailingTypeNames ?? [])}");
     }
+
+    [Fact]
+    public void Domain_Entities_Should_Implement_IEntity()
+    {
+        var entityTypes = DomainAssembly.GetTypes()
+            .Where(t => t.IsPublic && !t.IsNested && t.IsClass && !t.IsAbstract && t.Namespace == "NainOrder.Domain.Entities")
+            .ToList();
+
+        var nonCompliant = entityTypes
+            .Where(t => !typeof(NainOrder.Domain.Primitives.IEntity).IsAssignableFrom(t))
+            .Select(t => t.FullName)
+            .ToList();
+
+        Assert.True(nonCompliant.Count == 0, $"Domain entities must implement IEntity: {string.Join(", ", nonCompliant)}");
+    }
+
+    [Fact]
+    public void Application_Services_Should_Be_Sealed()
+    {
+        var result = Types.InAssembly(ApplicationAssembly)
+            .That()
+            .ResideInNamespace("NainOrder.Application.Services")
+            .And()
+            .AreClasses()
+            .Should()
+            .BeSealed()
+            .GetResult();
+
+        Assert.True(result.IsSuccessful, $"Application services must be sealed: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
 }
+
