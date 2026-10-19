@@ -1,7 +1,7 @@
 /** Panel de control: métricas agregadas del negocio y acceso al escenario guiado. */
 
 import { html, icon, raw, render, $, $$, delegate, countUp } from "../dom.js";
-import { api } from "../api.js";
+import { api, isDemoMode } from "../api.js";
 import { areaChart, distributionBars } from "../charts.js";
 import { openModal, withBusy } from "../overlay.js";
 import { toastError } from "../toast.js";
@@ -92,8 +92,9 @@ const markup = (stats, orders) => {
       <div>
         <h1 class="section-head__title">Panel de control</h1>
         <p class="section-head__text">
-          Métricas agregadas en base de datos sobre importes almacenados en céntimos enteros,
-          no calculadas en memoria.
+          ${isDemoMode()
+            ? "Métricas calculadas por el motor de dominio del navegador. Con la API .NET en marcha, las agrega SQLite sobre importes en céntimos enteros."
+            : "Métricas agregadas en base de datos sobre importes almacenados en céntimos enteros, no calculadas en memoria."}
         </p>
       </div>
       <div class="row">

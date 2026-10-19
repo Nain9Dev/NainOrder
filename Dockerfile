@@ -17,7 +17,12 @@ RUN mkdir -p /app/data && chown -R $APP_UID:$APP_UID /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Los .csproj se copian primero para que la capa de restore se reutilice mientras
+# Las propiedades comunes y las versiones centralizadas viven en la raíz: ningún
+# .csproj declara TargetFramework ni versión de paquete por su cuenta. Sin estos dos
+# ficheros el restore falla con NETSDK1013, así que se copian antes que nada.
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
+
+# Los .csproj se copian después para que la capa de restore se reutilice mientras
 # no cambien las dependencias, aunque cambie el código.
 COPY ["NainOrder.Api/NainOrder.Api.csproj", "NainOrder.Api/"]
 COPY ["NainOrder.Application/NainOrder.Application.csproj", "NainOrder.Application/"]

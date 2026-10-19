@@ -20,7 +20,7 @@
 | T-012 | Pin a patched `SQLitePCLRaw` — the transitive version carried a known high-severity vulnerability | `[A]` | ✅ `dotnet list package --vulnerable` is clean |
 | T-013 | Container hardening: non-root user, writable data directory, layer caching | `[A]` | ✅ `id -u` inside the image is not `0` |
 | T-014 | An unknown `/api` route must return `404` JSON, not the panel's HTML | `[A]` | ✅ `An_unknown_api_route_returns_json_404_and_never_the_client_application` passes |
-| T-015 | Test suite: example-based, property-based and integration | `[A]` | ✅ 52 tests green in Release |
+| T-015 | Test suite: example-based, property-based and integration | `[A]` | ✅ 76 tests green in Release |
 | T-016 | CI as a quality gate: build, vulnerability audit, tests, container smoke test | `[A]` | ✅ Green run on the pull request |
 | T-017 | Canonical documentation under `docs/` with ADRs and traceability | `[A]` | ✅ Every requirement mapped to an automated test |
 | T-018 | Resolve Q-001: cover the five gaps in [50-traceability.md](50-traceability.md) | `[A]` | ✅ All 5 gaps covered with automated tests; 100% requirements traceability |
@@ -28,6 +28,7 @@
 | T-020 | Resolve Q-003: confirm reservation policy | `[M]` | ✅ Immediate reservation on line addition confirmed for bounded scope |
 | T-023 | Optimistic concurrency on `Order` aggregate ([ADR-0007](30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)) | `[A]` | ✅ `Order.Version` concurrency token + probe test passing |
 | T-024 | Pin local dev port 8170 per `dev-ports.json` | `[A]` | ✅ Port 8170 pinned in `launchSettings.json` |
+| T-025 | Align every documented claim with the code: test count, transaction diagram, threat model, repository description, and the nature of the static deployment | `[A]` | ✅ No claim in `README.md` or `docs/` asserts behaviour the code does not implement |
 
 ## Next
 
@@ -35,7 +36,21 @@
 | :--- | :--- | :--- | :--- |
 | T-021 | Promote the `docs/` set from `Draft` to `Approved` after review | `[H]` | Statuses updated in [README.md](README.md) |
 | T-022 | Publish a live instance and link it from the README | `[H]` | The URL responds `200` on `/health` |
+| T-026 | Remove the two third-party resources from `index.html`, or self-host them with Subresource Integrity, and correct the zero-dependency claim until then | `[A]` | The panel loads no remote origin, or every remote reference carries `integrity`. Closes G-3 in [22-threat-model.md](22-threat-model.md) |
+| T-027 | Make `dom.js` compose templates safely so nested `html` does not need `raw()` | `[A]` | The architecture view renders its markup instead of printing it, and a test asserts it. Closes G-4 |
+| T-028 | Emit security response headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, HSTS) | `[A]` | An integration test asserts the headers. Closes G-5 |
+| T-029 | Restrict trusted proxies so the rate limiter partition key cannot be spoofed via `X-Forwarded-For` | `[A]` | Closes G-1 |
+| T-030 | Protect `main`: require a pull request and a green pipeline before merge | `[H]` | A push straight to `main`, or a merge over a red run, is refused by GitHub. Closes G-9 |
 
 ## Handoff
 
-State: 52 automated tests green in Release, `AddOrderVersion` EF Core migration added, optimistic concurrency on `Order` preventing aggregate lost updates, all 5 traceability gaps closed, and port 8170 pinned per developer registry.
+State: 76 automated tests green in Release, `AddOrderVersion` EF Core migration added, optimistic concurrency on `Order` preventing aggregate lost updates, all 5 traceability gaps closed, and port 8170 pinned per developer registry.
+
+T-025 closed: the documented claims now match the code. The threat model was rewritten against the
+real system and records ten known gaps (G-1 to G-10) instead of describing controls that do not
+exist. T-026 to T-029 are those gaps turned into tasks; none is started. No code in `Domain`,
+`Application`, `Infrastructure` or the controllers was touched, so the suite is unchanged at 76.
+
+Verified: `dotnet build && dotnet test` green (0 warnings, 76/76), and the panel exercised in a
+browser against both engines — the real API on `:8170` (no notice, database copy) and the static
+fallback with no API behind it (notice visible, browser-engine copy), at desktop and 375 px.
