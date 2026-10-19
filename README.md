@@ -15,14 +15,19 @@
 [![Architecture Tests](https://img.shields.io/badge/architecture%20tests-NetArchTest%20enforced-blueviolet)](NainOrder.Tests/Architecture/CleanArchitectureTests.cs)
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-1f2937?style=flat&logo=github&logoColor=white)](https://codespaces.new/Nain9Dev/NainOrder)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-57%20verdes-2ea44f)
+![Tests](https://img.shields.io/badge/tests-76%20verdes-2ea44f)
 ![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
 
 Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
 DDD táctico y CQRS en el lado de lectura. Incluye un **panel de cliente propio** servido por
 la misma aplicación, sin proceso de compilación ni dependencias de Node.
 
-> **Demo interactiva online:** Puedes probar el panel directamente en [order.naindev.com](https://order.naindev.com/) sin necesidad de clonar ni ejecutar nada localmente.
+> **Demo interactiva online:** [order.naindev.com](https://order.naindev.com/) sirve el panel sobre
+> un **motor de dominio en el navegador**, no sobre esta API. Es un despliegue estático: permite
+> recorrer la interfaz completa sin instalar nada, pero lo que valida las reglas ahí es JavaScript,
+> no .NET. **El backend que documenta este repositorio —SQLite, concurrencia optimista, unidad de
+> trabajo, RFC 7807— se ejecuta en local** con `dotnet run` o `docker run`. El panel indica en todo
+> momento cuál de los dos motores está respondiendo.
 
 Un único `dotnet run` levanta la API, la documentación y la interfaz en `http://localhost:8170`.
 
@@ -120,20 +125,20 @@ sequenceDiagram
     participant Domain as NainOrder.Domain (Order Aggregate)
     participant DB as SQLite (Transacción Atómica)
 
-    Cliente->>API: POST /api/orders/{id}/items (If-Match: ETag)
-    API->>App: AddOrderItemCommand
-    App->>DB: Leer Order + Product (con RowVersion / Stock)
-    App->>Domain: Order.AddLine(product, quantity)
+    Cliente->>API: POST /api/orders/{id}/items
+    API->>App: OrderService.AddItemToOrderAsync
+    App->>DB: Leer Order + Product (con sus tokens de versión)
+    App->>Domain: Product.RemoveStock(quantity) + Order.AddItem(...)
     alt Stock suficiente
-        Domain-->>App: Evento ItemAdded + StockDecrementado
-        App->>DB: Commit atómico con verificación de ConcurrencyToken
-        DB-->>App: OK (Nuevo ETag generado)
-        App-->>API: 200 OK + Payload con totales exactos
-        API-->>Cliente: Interfaz actualizada en 14ms (ETag / Céntimos enteros)
+        Domain-->>App: Stock reservado y total del pedido recalculado
+        App->>DB: Commit atómico (UnitOfWork) verificando ambos tokens
+        DB-->>App: OK (Version++ en Order y en Product)
+        App-->>API: 200 OK + pedido con totales exactos en céntimos
+        API-->>Cliente: Panel repintado con el total que devuelve la API
     else Stock insuficiente
-        Domain-->>App: Excepción InsufficientStockDomainException
-        App-->>API: 422 UnprocessableEntity (ProblemDetails)
-        API-->>Cliente: Error de negocio sanitizado sin tocar stock
+        Domain-->>App: InsufficientStockException(requested, available)
+        App-->>API: 409 Conflict (ProblemDetails, code insufficient_stock)
+        API-->>Cliente: Error de negocio sin tocar el inventario
     end
 ```
 
@@ -189,7 +194,7 @@ Vive en `NainOrder.Api/wwwroot` y se sirve desde el mismo origen que la API: sin
 y CSS con variables, sin ninguna librería de terceros.
 
 - **Panel** — ingresos confirmados y pendientes, serie temporal, distribución por estado y
-  ranking de productos, todo agregado en base de datos.
+  ranking de productos, agregados en SQL por el lado de lectura cuando la API está en marcha.
 - **Catálogo** — alta y edición de referencias, ajuste de stock y añadido al pedido en curso.
 - **Pedidos** — listado paginado con filtros de servidor y panel de detalle con el ciclo de
   vida, la cesta editable y las transiciones que el dominio permite en ese momento.
@@ -198,6 +203,21 @@ y CSS con variables, sin ninguna librería de terceros.
 
 Tema claro y oscuro, diseño adaptable, paleta de comandos (`Ctrl` + `K`), navegación por
 teclado, contraste AA y respeto por `prefers-reduced-motion`.
+
+### Dos motores, una misma interfaz
+
+El panel funciona contra dos implementaciones del mismo contrato, y **siempre dice cuál está
+usando**:
+
+| Motor | Cuándo | Qué valida las reglas | Qué se puede comprobar |
+| :--- | :--- | :--- | :--- |
+| **API .NET** | `dotnet run` o `docker run` | `NainOrder.Domain` sobre SQLite, dentro de una unidad de trabajo | Todo: concurrencia optimista, `409` por stock insuficiente, `429` del limitador, `500` saneado, idempotencia |
+| **Motor del navegador** | Despliegue estático (`order.naindev.com`) | `wwwroot/assets/js/mock-backend.js`, en memoria, persistido en `localStorage` | El recorrido de la interfaz y la máquina de estados. **No** la concurrencia, ni la transaccionalidad, ni los céntimos enteros |
+
+El modo estático existe para que la interfaz se pueda recorrer sin instalar nada. **No sustituye
+al backend ni demuestra sus garantías**: las afirmaciones de este README sobre concurrencia,
+transacciones y contrato de error se comprueban ejecutando la API y su suite de pruebas, no
+visitando la demo.
 
 ---
 
@@ -224,7 +244,7 @@ dotnet run
 dotnet test NainOrder.slnx -c Release
 ```
 
-52 pruebas repartidas en cuatro niveles:
+76 pruebas repartidas en cuatro niveles:
 
 - **Ejemplo** — la máquina de estados, incluidas todas las transiciones que debe impedir.
 - **Propiedad** (FsCheck) — las invariantes aritméticas se comprueban contra cientos de casos

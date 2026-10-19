@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (52/52 tests)
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (76/76 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.

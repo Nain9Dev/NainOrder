@@ -41,6 +41,12 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
   `try/catch`.
 - The container runs as a non-root user and writes its database to a directory it owns.
 - Swagger moved from `/` to `/swagger`; the client panel now occupies the root.
+- [22-threat-model.md](22-threat-model.md) was rewritten to model the system that exists. The
+  previous version described authentication, role-based authorisation, FluentValidation, PostgreSQL
+  and audit events, none of which are implemented, and misstated the rate limiter and the
+  idempotency contract. It now names its own gaps instead.
+- The static deployment is labelled as what it is. The panel carries a permanent notice, and the
+  dashboard no longer claims database aggregation while the browser engine is answering.
 
 ### Fixed
 
@@ -51,6 +57,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 - Paying an order with no lines was accepted.
 - `SQLitePCLRaw.lib.e_sqlite3` was pulled in transitively at a version with a known high-severity
   vulnerability; a patched version is now pinned explicitly.
+- The documented test count was wrong in four places (badge, README, traceability matrix and task
+  log), all understating the real figure. The suite reports 76.
+- The transaction sequence diagram in the README described an `If-Match`/`ETag` exchange that does
+  not exist, named a command that does not exist, and reported insufficient stock as `422`. The
+  endpoint answers `409`.
 - Overlays and toasts leaked into the DOM when their closing animation never fired, for instance in a
   background tab.
 
