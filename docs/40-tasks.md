@@ -29,6 +29,7 @@
 | T-023 | Optimistic concurrency on `Order` aggregate ([ADR-0007](30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)) | `[A]` | ✅ `Order.Version` concurrency token + probe test passing |
 | T-024 | Pin local dev port 8170 per `dev-ports.json` | `[A]` | ✅ Port 8170 pinned in `launchSettings.json` |
 | T-025 | Align every documented claim with the code: test count, transaction diagram, threat model, repository description, and the nature of the static deployment | `[A]` | ✅ No claim in `README.md` or `docs/` asserts behaviour the code does not implement |
+| T-030 | Protect `main`: require a pull request and a green pipeline before merge | `[M]` | ✅ `main` reports `protected: true`. A pull request is required, the three CI contexts must pass and be up to date with the base, force pushes and deletion are refused, and the rules apply to administrators |
 
 ## Next
 
@@ -40,7 +41,6 @@
 | T-027 | Make `dom.js` compose templates safely so nested `html` does not need `raw()` | `[A]` | The architecture view renders its markup instead of printing it, and a test asserts it. Closes G-4 |
 | T-028 | Emit security response headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, HSTS) | `[A]` | An integration test asserts the headers. Closes G-5 |
 | T-029 | Restrict trusted proxies so the rate limiter partition key cannot be spoofed via `X-Forwarded-For` | `[A]` | Closes G-1 |
-| T-030 | Protect `main`: require a pull request and a green pipeline before merge | `[H]` | A push straight to `main`, or a merge over a red run, is refused by GitHub. Closes G-9 |
 
 ## Handoff
 

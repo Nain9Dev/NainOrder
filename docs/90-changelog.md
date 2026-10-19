@@ -48,6 +48,14 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 - The static deployment is labelled as what it is. The panel carries a permanent notice, and the
   dashboard no longer claims database aggregation while the browser engine is answering.
 
+### Security
+
+- `main` is protected. A change now reaches it through a pull request whose three CI contexts pass
+  and are up to date with the base; force pushes and branch deletion are refused, and the rules
+  apply to administrators. The quality gate described in `AGENTS.md` had been advisory until now,
+  which is how four consecutive red runs reached `main` unnoticed. Closes G-9 in
+  [22-threat-model.md](22-threat-model.md).
+
 ### Fixed
 
 - An unknown route under `/api` returned `200` with the panel's HTML instead of `404` JSON, which

@@ -198,7 +198,7 @@ Open and tracked, not mitigated. Listing them is the point of the document.
 | **G-6** | No privacy notice anywhere, although G-3 causes visitor IP addresses to reach a third origin | Information duty unmet under GDPR art. 13 | Medium |
 | **G-7** | The idempotency store is `IMemoryCache`: per-process and lost on restart | Replay protection does not survive a redeploy and would not hold across instances | Low, given single-instance deployment |
 | **G-8** | No request body size limit and no EF Core command timeout | A large body or a slow query holds a connection longer than intended | Low |
-| **G-9** | `main` has no branch protection, so a red pipeline does not block a push | The stated quality gate is advisory, not enforced | Medium |
+| ~~**G-9**~~ | ~~`main` has no branch protection, so a red pipeline does not block a push~~ | **Closed.** `main` now requires a pull request whose three CI contexts pass and are up to date with the base. Force pushes and deletion are refused, and the rules apply to administrators, so the quality gate `AGENTS.md` describes is now enforced rather than advisory | — |
 | **G-10** | GitHub Actions are referenced by mutable tags rather than pinned by commit SHA | A compromised or retagged action runs with the workflow's permissions | Medium |
 
 ---
