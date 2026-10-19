@@ -8,6 +8,10 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Stock race: `POST /api/demo/stock-race` and a panel view that run the "never oversell" guarantee
+  live — N buyers against M units, conflicts retried, verdict computed from persisted stock
+  (`specs/001-stock-race`, REQ-070 to REQ-073).
+- Visual README: stock-race hero, state diagram, layered architecture figure and panel screenshots.
 - Complete order lifecycle: `Processing`, `Shipped` and `Cancelled` transitions, with stock
   restitution on cancellation.
 - Basket operations: change a line's quantity and remove a line, adjusting inventory by the exact
@@ -58,6 +62,9 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Fixed
 
+- Panel: dashboard KPIs rendered `0` because the card helper read a misnamed property; the Architecture
+  view printed its header button as raw markup; each navigation hid the first lines of a view under the
+  sticky top bar.
 - An unknown route under `/api` returned `200` with the panel's HTML instead of `404` JSON, which
   broke any client expecting a JSON body.
 - A technical failure was reported as `400` with its message exposed, and was swallowed instead of

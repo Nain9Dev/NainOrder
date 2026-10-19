@@ -31,6 +31,8 @@
 | T-025 | Align every documented claim with the code: test count, transaction diagram, threat model, repository description, and the nature of the static deployment | `[A]` | ✅ No claim in `README.md` or `docs/` asserts behaviour the code does not implement |
 | T-030 | Protect `main`: require a pull request and a green pipeline before merge | `[M]` | ✅ `main` reports `protected: true`. A pull request is required, the three CI contexts must pass and be up to date with the base, force pushes and deletion are refused, and the rules apply to administrators |
 
+Feature [001 — stock race](../specs/001-stock-race/tasks.md) (T-031 to T-036) is done: 82 tests green.
+
 ## Next
 
 | ID | Task | Label | Done when |

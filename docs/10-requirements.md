@@ -55,6 +55,15 @@ says.
 | REQ-041 | When a concurrent modification is detected, the system shall reject the losing request with `409 concurrency_conflict` rather than applying a lost update. |
 | REQ-042 | The system shall persist monetary amounts in a form that supports exact ordering and aggregation in the database. |
 
+## Stock race (demonstration)
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-070 | When a stock race is requested with `buyers` and `units`, the system shall create a throwaway product with `units` in stock and have `buyers` independent buyers each try to reserve one unit simultaneously, each in its own order and transaction. |
+| REQ-071 | When a buyer loses a write race (`concurrency_conflict`), the system shall retry it with a fresh transaction, and shall report per buyer whether the unit was `won` or `rejected`, the rejection `code` (`insufficient_stock`) and the number of attempts. |
+| REQ-072 | The system shall report `sold + remaining = units`, `sold <= units` and `remaining >= 0` as a `balanced` verdict computed from the persisted product, not from the buyers' answers. |
+| REQ-073 | If `buyers` is outside 2..64 or `units` is outside 1..32, then the system shall reject the request with `400` before any data is created. |
+
 ## HTTP contract
 
 | ID | Requirement |

@@ -1,345 +1,114 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.svg">
-  <img alt="NainOrder Architectural Blueprint" src="docs/assets/banner-dark.svg" width="100%">
+  <img alt="NainOrder" src="docs/assets/banner-dark.svg" width="100%">
 </picture>
 
 # NainOrder
 
+**An order engine where a unit of stock can never be sold twice — and you can watch it prove it.**
+
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
-[![Demo Online](https://img.shields.io/badge/demo-online-blueviolet?style=flat&logo=githubpages&logoColor=white)](https://order.naindev.com/)
-[![Ecosystem Status](https://img.shields.io/badge/status-100%25%20operational-success)](https://status.naindev.com)
-[![Engineering Handbook](https://img.shields.io/badge/paved%20road-C4%20%2B%20Clean%20Arch-blue)](https://github.com/Nain9Dev/engineering-handbook)
-[![Cost](https://img.shields.io/badge/cost-0.00_%E2%82%AC-22c55e)](https://github.com/Nain9Dev/engineering-handbook/blob/main/governance/zero-cost-philosophy.md)
-[![Architecture Tests](https://img.shields.io/badge/architecture%20tests-NetArchTest%20enforced-blueviolet)](NainOrder.Tests/Architecture/CleanArchitectureTests.cs)
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-1f2937?style=flat&logo=github&logoColor=white)](https://codespaces.new/Nain9Dev/NainOrder)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-76%20verdes-2ea44f)
-![Dependencias del cliente](https://img.shields.io/badge/dependencias%20del%20cliente-0-22d3ee)
+![Tests](https://img.shields.io/badge/tests-82%20passing-2ea44f)
+![Client dependencies](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
+[![Live demo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
-Motor de pedidos para comercio electrónico construido en **.NET 10** con Clean Architecture,
-DDD táctico y CQRS en el lado de lectura. Incluye un **panel de cliente propio** servido por
-la misma aplicación, sin proceso de compilación ni dependencias de Node.
+<p align="center">
+  <img src="docs/assets/panel-race.png" alt="Stock race: 24 buyers compete for 5 units; 5 win, 19 are rejected, stock balances to the unit" width="92%">
+</p>
 
-> **Demo interactiva online:** [order.naindev.com](https://order.naindev.com/) sirve el panel sobre
-> un **motor de dominio en el navegador**, no sobre esta API. Es un despliegue estático: permite
-> recorrer la interfaz completa sin instalar nada, pero lo que valida las reglas ahí es JavaScript,
-> no .NET. **El backend que documenta este repositorio —SQLite, concurrencia optimista, unidad de
-> trabajo, RFC 7807— se ejecuta en local** con `dotnet run` o `docker run`. El panel indica en todo
-> momento cuál de los dos motores está respondiendo.
-
-Un único `dotnet run` levanta la API, la documentación y la interfaz en `http://localhost:8170`.
-
-> El objetivo del repositorio no es que confíes en lo que afirma, sino que puedas comprobarlo:
-> las reglas críticas están respaldadas por pruebas que las ejercitan, y cada decisión de diseño
-> tiene su ADR con las alternativas que se descartaron y por qué.
+> **Stock race** — 24 buyers hit 5 units at the same instant. Exactly 5 win, 19 get a `409`, and
+> *sold + remaining = in stock* holds. Press the button in the panel and see it yourself.
 
 ---
 
-## Compruébalo tú mismo
+## What it does
 
-Ninguna de estas afirmaciones se sostiene sola. Cada una tiene detrás una prueba que puedes ejecutar:
+| 🛒 Orders | 📦 Inventory | 🔒 Guarantees |
+| :--- | :--- | :--- |
+| Basket → paid → processing → shipped, or cancelled | Adding a line **reserves** stock in the same transaction | No oversell under concurrency |
+| Only legal transitions; the API publishes them | Cancelling **returns** every unit | Money in integer cents, never floats |
+| Totals always equal the sum of the lines | Quantity changes adjust stock by the exact difference | Business failure `4xx`, technical failure `500` |
 
-| Afirmación | Cómo se demuestra |
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> PendingPayment
+    PendingPayment --> Paid
+    Paid --> Processing
+    Processing --> Shipped
+    Shipped --> [*]
+    PendingPayment --> Cancelled
+    Paid --> Cancelled
+    Processing --> Cancelled
+    Cancelled --> [*]
+```
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="Four nested layers: Api, Infrastructure, Application and Domain. Dependencies point inwards." width="92%">
+</p>
+
+The rule is **enforced, not declared**: `NetArchTest` fails the build if `Domain` references anything or
+`Application` learns about EF Core.
+
+<p align="center">
+  <img src="docs/assets/panel-dashboard.png" alt="Dashboard with revenue, order states and top products" width="46%">
+  <img src="docs/assets/panel-architecture.png" alt="Architecture view with live request trace and state machine" width="46%">
+</p>
+
+The client panel is plain ES modules served by the API itself: no npm, no build step, no CORS.
+
+---
+
+## Don't trust it, run it
+
+| Claim | Proof |
 | :--- | :--- |
-| La arquitectura limpia está blindada por código | `CleanArchitectureTests` (NetArchTest) comprueba por reflexión que Domain tiene 0 dependencias y Application no conoce Infrastructure ni API |
-| El stock no se puede sobrevender, ni siquiera con peticiones simultáneas | `ConcurrencyTests` lanza 16 reservas a la vez contra 6 unidades y comprueba que lo concedido más lo restante cuadra exactamente |
-| Las modificaciones simultáneas al mismo pedido no corrompen los totales | `OrderAggregateConcurrencyProbe` demuestra que dos contextos simultáneos mutando líneas del mismo pedido activan concurrencia optimista y protegen el total |
-| El stock nunca queda negativo con ninguna secuencia de operaciones | `DomainInvariantProperties` genera cientos de casos por ejecución buscando el contraejemplo |
-| Una reserva rechazada no toca el inventario | Los tests de error comparan el stock antes y después del rechazo |
-| Cancelar un pedido devuelve cada unidad al catálogo | `Cancelling_an_order_puts_the_reserved_stock_back` |
-| Un fallo de negocio es 4xx y uno técnico sigue siendo 500 sanitizado | `GlobalExceptionHandlerTests` y tests de integración comprueban la supresión de detalles internos fuera de desarrollo |
-| El artefacto que se despliega funciona | CI construye la imagen y la interroga en marcha: arranque, panel, OpenAPI, 404 de API y usuario no root |
+| Stock is never oversold, even in a race | `StockRaceTests`, `ConcurrencyTests` |
+| Stock never goes negative, for any sequence | `DomainInvariantProperties` (FsCheck) |
+| Two writers on one order never lose an update | `OrderAggregateConcurrencyProbe` |
+| Cancelling returns every unit | `OrderFlowTests` |
+| Domain has zero dependencies | `CleanArchitectureTests` |
+| The shipped container works | CI builds the image and probes it |
 
-```bash
-dotnet test NainOrder.slnx -c Release
-```
-
-La correspondencia completa entre cada requisito y la prueba que lo cubre está en
-[`docs/50-traceability.md`](docs/50-traceability.md), con el 100% de los requisitos cubiertos por
-la suite automatizada.
+Every requirement maps to a test in [`docs/50-traceability.md`](docs/50-traceability.md).
 
 ---
 
-## Qué resuelve
-
-El dominio gobierna un ciclo de vida de pedido con reserva de inventario real:
-
-```
-PendingPayment ──▶ Paid ──▶ Processing ──▶ Shipped
-      │             │            │
-      └─────────────┴────────────┴──▶ Cancelled  (repone el stock reservado)
-```
-
-- Añadir una línea **reserva stock** en el mismo instante y dentro de la misma transacción.
-- Cambiar la cantidad ajusta el inventario **por la diferencia exacta**, en ambos sentidos.
-- Cancelar **devuelve al catálogo** todas las unidades reservadas.
-- Un pedido cobrado **congela su cesta**; un pedido enviado es un estado final.
-
-Las transiciones permitidas las publica el propio dominio en
-`GET /api/meta/order-state-machine`, y el panel dibuja sus botones a partir de esa respuesta:
-una regla nueva en el dominio se refleja en la interfaz sin tocar el front.
-
----
-
-## Arquitectura y Diagrama C4
-
-```mermaid
-graph TD
-    Client["Navegador / Panel Web Propio<br/>(Vanilla JS / Sin dependencias Node)"]
-    API["NainOrder.Api<br/>(Controladores REST / RFC 7807 ProblemDetails)"]
-    AppLayer["NainOrder.Application<br/>(Casos de uso / CQRS lectura / DTOs)"]
-    DomainLayer["NainOrder.Domain<br/>(Agregados Order y Product / Máquina de estados)"]
-    InfraLayer["NainOrder.Infrastructure<br/>(EF Core / SQLite / ValueConverters)"]
-    DB[("SQLite Database<br/>(Persistencia atómica en céntimos enteros)")]
-
-    Client -->|HTTP / JSON| API
-    API --> AppLayer
-    AppLayer --> DomainLayer
-    AppLayer --> InfraLayer
-    InfraLayer -->|Unidad de trabajo / Transacción atómica| DB
-```
-
-Cuatro proyectos con las dependencias apuntando siempre hacia dentro:
-
-| Proyecto | Responsabilidad | Depende de |
-|---|---|---|
-| `NainOrder.Domain` | Entidades, invariantes y máquina de estados | *nada* |
-| `NainOrder.Application` | Casos de uso, DTOs, contratos de persistencia | Domain |
-| `NainOrder.Infrastructure` | EF Core, SQLite, Fluent API, consultas de lectura | Application, Domain |
-| `NainOrder.Api` | Controladores REST, contrato de errores, panel web | Application, Infrastructure |
-
-`NainOrder.Domain` no referencia ningún paquete: ni EF Core, ni ASP.NET, ni inyección de
-dependencias. Esa restricción es lo que mantiene el modelo de negocio verificable de forma
-aislada, y es la que comprueban los tests de dominio.
-
-### Flujo de Transacción y Concurrencia Optimista
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Cliente as Navegador / SPA
-    participant API as NainOrder.Api (HTTP)
-    participant App as NainOrder.Application
-    participant Domain as NainOrder.Domain (Order Aggregate)
-    participant DB as SQLite (Transacción Atómica)
-
-    Cliente->>API: POST /api/orders/{id}/items
-    API->>App: OrderService.AddItemToOrderAsync
-    App->>DB: Leer Order + Product (con sus tokens de versión)
-    App->>Domain: Product.RemoveStock(quantity) + Order.AddItem(...)
-    alt Stock suficiente
-        Domain-->>App: Stock reservado y total del pedido recalculado
-        App->>DB: Commit atómico (UnitOfWork) verificando ambos tokens
-        DB-->>App: OK (Version++ en Order y en Product)
-        App-->>API: 200 OK + pedido con totales exactos en céntimos
-        API-->>Cliente: Panel repintado con el total que devuelve la API
-    else Stock insuficiente
-        Domain-->>App: InsufficientStockException(requested, available)
-        App-->>API: 409 Conflict (ProblemDetails, code insufficient_stock)
-        API-->>Cliente: Error de negocio sin tocar el inventario
-    end
-```
-
-
-### Decisiones que merecen explicación
-
-**El dinero se persiste en céntimos enteros.** SQLite no tiene tipo `decimal`: EF Core lo
-almacenaría como texto, con lo que `ORDER BY` y `SUM` operarían sobre cadenas y devolverían
-resultados incorrectos. Un `ValueConverter` a `INTEGER` hace exactas la ordenación y la
-agregación, y elimina el error de coma flotante en el redondeo de importes.
-
-**Concurrencia optimista sobre el stock.** `Product` lleva un token de versión declarado como
-`IsConcurrencyToken()`. Si dos peticiones simultáneas intentan reservar la última unidad, la
-segunda falla en el `UPDATE` y recibe un `409`, en lugar de sobrevender.
-
-**Concurrencia optimista sobre el agregado de pedido.** Del mismo modo que el catálogo protege el
-stock, `Order` lleva un token de versión declarado como `IsConcurrencyToken()`. Dos peticiones
-concurrentes mutando la cesta del mismo pedido no pueden provocar un *lost update* ni
-desincronizar los totales materializados ([ADR-0007](docs/30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)).
-
-**Unidad de trabajo explícita.** Los repositorios ya no confirman por su cuenta. Añadir una
-línea toca dos agregados —pedido y producto— y ambos se persisten dentro de la misma
-transacción, o ninguno.
-
-**Los totales del pedido se materializan.** Se recalculan en cada cambio de la cesta en lugar
-de derivarse al leer, de modo que listados y métricas agregan en base de datos sin cargar las
-líneas de cada pedido.
-
-**Errores como contrato, no como texto.** Un único `IExceptionHandler` traduce cada excepción
-a `ProblemDetails` (RFC 7807) con un código estable y legible por máquina. Un fallo de negocio
-es `4xx`; un fallo técnico sigue siendo `500` y queda registrado con su traza.
-
-```jsonc
-// POST /api/orders/{id}/items  ->  409 Conflict
-{
-  "type": "https://httpstatuses.io/409",
-  "title": "Insufficient stock",
-  "status": 409,
-  "detail": "Insufficient stock: 99 requested but only 3 available.",
-  "code": "insufficient_stock",
-  "requested": 99,
-  "available": 3,
-  "traceId": "0HNO2OBO3BIE3:00000001"
-}
-```
-
----
-
-## El panel de cliente
-
-Vive en `NainOrder.Api/wwwroot` y se sirve desde el mismo origen que la API: sin CORS, sin
-`npm install` y sin paso de compilación en el despliegue. Está escrito con módulos ES nativos
-y CSS con variables, sin ninguna librería de terceros.
-
-- **Panel** — ingresos confirmados y pendientes, serie temporal, distribución por estado y
-  ranking de productos, agregados en SQL por el lado de lectura cuando la API está en marcha.
-- **Catálogo** — alta y edición de referencias, ajuste de stock y añadido al pedido en curso.
-- **Pedidos** — listado paginado con filtros de servidor y panel de detalle con el ciclo de
-  vida, la cesta editable y las transiciones que el dominio permite en ese momento.
-- **Arquitectura** — las capas, la máquina de estados leída de la API y una **consola con la
-  traza en vivo** de cada petición que hace la interfaz, con su latencia real.
-
-Tema claro y oscuro, diseño adaptable, paleta de comandos (`Ctrl` + `K`), navegación por
-teclado, contraste AA y respeto por `prefers-reduced-motion`.
-
-### Dos motores, una misma interfaz
-
-El panel funciona contra dos implementaciones del mismo contrato, y **siempre dice cuál está
-usando**:
-
-| Motor | Cuándo | Qué valida las reglas | Qué se puede comprobar |
-| :--- | :--- | :--- | :--- |
-| **API .NET** | `dotnet run` o `docker run` | `NainOrder.Domain` sobre SQLite, dentro de una unidad de trabajo | Todo: concurrencia optimista, `409` por stock insuficiente, `429` del limitador, `500` saneado, idempotencia |
-| **Motor del navegador** | Despliegue estático (`order.naindev.com`) | `wwwroot/assets/js/mock-backend.js`, en memoria, persistido en `localStorage` | El recorrido de la interfaz y la máquina de estados. **No** la concurrencia, ni la transaccionalidad, ni los céntimos enteros |
-
-El modo estático existe para que la interfaz se pueda recorrer sin instalar nada. **No sustituye
-al backend ni demuestra sus garantías**: las afirmaciones de este README sobre concurrencia,
-transacciones y contrato de error se comprueban ejecutando la API y su suite de pruebas, no
-visitando la demo.
-
----
-
-## Puesta en marcha
-
-No hace falta instalar ningún servidor de base de datos: SQLite genera el fichero al arrancar
-y la aplicación aplica migraciones y siembra el catálogo de demostración por sí sola.
+## Quick start
 
 ```bash
 git clone https://github.com/Nain9Dev/NainOrder.git
-cd NainOrder/NainOrder.Api
-dotnet run
+cd NainOrder/NainOrder.Api && dotnet run
 ```
 
-| Ruta | Contenido |
-|---|---|
-| `/` | Panel de cliente |
-| `/swagger` | Documentación interactiva de la API |
-| `/health` | Comprobación de estado |
-
-### Tests
+Open <http://localhost:8170> — panel, [`/swagger`](http://localhost:8170/swagger) and `/health` are all there.
+No database to install: SQLite creates itself.
 
 ```bash
-dotnet test NainOrder.slnx -c Release
-```
-
-76 pruebas repartidas en cuatro niveles:
-
-- **Ejemplo** — la máquina de estados, incluidas todas las transiciones que debe impedir.
-- **Propiedad** (FsCheck) — las invariantes aritméticas se comprueban contra cientos de casos
-  generados: el stock nunca queda negativo, una reserva rechazada no altera el inventario, el
-  total del pedido siempre coincide con la suma de sus líneas y los tokens de versión avanzan.
-- **Concurrencia multicontexto** — probes de carreras simultáneas demostrando el bloqueo y
-  la protección contra *lost updates* del motor EF Core sobre los agregados.
-- **Integración** — la aplicación real, con sus migraciones y su middleware, atacada por HTTP:
-  flujo completo de compra, caminos de error, paginación, sanitización de 500 y entrega del panel y de Swagger.
-
-### Contenedor
-
-```bash
+dotnet test NainOrder.slnx -c Release          # 82 tests
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 
-La imagen se ejecuta con un usuario sin privilegios y escribe la base de datos en `/app/data`.
+> **About the live demo.** [order.naindev.com](https://order.naindev.com/) is a static page, so the panel runs
+> on an in-browser engine and says so. The concurrency guarantees above run against the .NET API — locally.
 
 ---
 
-## API
+## Go deeper
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api/products` | Catálogo, con filtro por texto y categoría |
-| `POST` | `/api/products` | Alta de producto (SKU único) |
-| `PUT` | `/api/products/{id}` | Actualiza nombre, precio, categoría y descripción |
-| `POST` | `/api/products/{id}/stock` | Ajusta el stock por un delta con signo |
-| `GET` | `/api/orders` | Listado paginado con filtros de estado, cliente y referencia |
-| `POST` | `/api/orders` | Abre un pedido en `PendingPayment` |
-| `POST` | `/api/orders/{id}/items` | Añade línea y reserva stock |
-| `PUT` | `/api/orders/{id}/items/{productId}` | Cambia la cantidad ajustando el inventario |
-| `DELETE` | `/api/orders/{id}/items/{productId}` | Quita la línea y repone stock |
-| `POST` | `/api/orders/{id}/{pay\|process\|ship\|cancel}` | Transiciones de estado |
-| `GET` | `/api/dashboard/stats` | Métricas agregadas del negocio |
-| `GET` | `/api/meta/order-state-machine` | Máquina de estados publicada por el dominio |
-| `POST` | `/api/demo/simulate-purchase` | Escenario guiado con traza paso a paso |
+[Charter](docs/00-charter.md) · [Requirements](docs/10-requirements.md) · [Architecture](docs/20-architecture.md) ·
+[Data model](docs/21-data-model.md) · [7 ADRs](docs/30-decisions/) · [Threat model](docs/22-threat-model.md) ·
+[Traceability](docs/50-traceability.md) · [OpenAPI](docs/openapi.json)
 
-La API pública está limitada a 120 peticiones por minuto y dirección IP.
+**Stack** — C# 13 · .NET 10 · ASP.NET Core · EF Core · SQLite · xUnit · FsCheck · ES modules
 
 ---
 
-## Documentación
-
-El repositorio sigue un flujo dirigido por especificación. La verdad estable del producto vive en
-[`docs/`](docs/README.md):
-
-| Documento | Contenido |
-|---|---|
-| [`00-charter.md`](docs/00-charter.md) | Objetivo, alcance y **no-objetivos** (lo que falta, falta a propósito) |
-| [`10-requirements.md`](docs/10-requirements.md) | Requisitos `REQ-###` en notación EARS |
-| [`20-architecture.md`](docs/20-architecture.md) | Capas y recorrido de una petición, con diagramas Mermaid |
-| [`21-data-model.md`](docs/21-data-model.md) | Entidades, invariantes y restricciones del motor |
-| [`30-decisions/`](docs/30-decisions/) | Siete ADR con las alternativas descartadas y su porqué |
-| [`50-traceability.md`](docs/50-traceability.md) | Cada requisito y la prueba que lo demuestra (100% cubierto) |
-| [`60-runbook.md`](docs/60-runbook.md) | Arranque, configuración, límites conocidos y recuperación |
-
-Las decisiones que más condicionan el diseño:
-
-- **[ADR-0001](docs/30-decisions/ADR-0001-money-as-integer-cents.md)** — el dinero se guarda en
-  céntimos enteros: SQLite no tiene `decimal` y ordenar o sumar sobre texto daba resultados falsos.
-- **[ADR-0002](docs/30-decisions/ADR-0002-optimistic-concurrency-on-stock.md)** — concurrencia
-  optimista sobre el stock, para que dos peticiones no puedan vender la misma unidad.
-- **[ADR-0003](docs/30-decisions/ADR-0003-unit-of-work-owns-the-transaction.md)** — la frontera
-  transaccional pertenece al caso de uso, no al repositorio.
-- **[ADR-0007](docs/30-decisions/ADR-0007-optimistic-concurrency-on-order-aggregate.md)** — concurrencia
-  optimista sobre el agregado de pedido para blindar los totales materializados contra escrituras perdidas.
-
----
-
-## Stack
-
-C# / .NET 10 · ASP.NET Core · Entity Framework Core (SQLite) · Swagger/OpenAPI ·
-xUnit · FsCheck · JavaScript (módulos ES) · CSS con variables
-
----
-
-## FinOps & Zero-Cost Architecture (0.00 €)
-
-<details>
-<summary><b>Inspect 0.00 € Infrastructure Topology &amp; Governance</b></summary>
-
-In alignment with the [NainDev Zero-Cost Infrastructure Philosophy](https://github.com/Nain9Dev/engineering-handbook/blob/main/governance/zero-cost-philosophy.md), this system operates at strictly **0.00 €/month** recurring cloud cost:
-
-| Component | Architecture Mechanism | Provider / Runtime | Monthly Cost |
-|:---|:---|:---|:---|
-| **Global Edge Delivery** | Anycast CDN, HTTP/3, TLS termination &amp; DDoS mitigation | Cloudflare Free Tier | 0.00 € |
-| **Client Application Shell** | Zero-dependency static assets served directly | GitHub Pages / Edge CDN | 0.00 € |
-| **Compute Execution** | Deterministic in-browser evaluation / Local container topology | Client WASM / Local Docker | 0.00 € |
-| **CI/CD Quality Gate** | Continuous integration, NetArchTest enforcement &amp; security scans | GitHub Actions (Linux Runner) | 0.00 € |
-| **Total Recurring Cost** | **Zero billable cloud dependencies** | | **0.00 €** |
-
-</details>
-
----
-
-*Desarrollado por [Aitor Nain](https://www.naindev.com/) — Arquitecto backend .NET. Diseño
-infraestructura determinista donde la integridad del dato no es negociable.*
+*By [Aitor Nain](https://www.naindev.com/) — backend architect. Systems where data integrity is not negotiable.*

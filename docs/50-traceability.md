@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (76/76 tests)
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (82/82 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -15,6 +15,7 @@ Test suites:
 | `Api.OrderFlowTests` | Integration over HTTP | The real application with its migrations and middleware |
 | `Api.ConcurrencyTests` | Integration, concurrent | Simultaneous requests competing for the same units |
 | `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
+| `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
 | `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
 
 ## Catalogue
@@ -65,6 +66,15 @@ Test suites:
 | REQ-040 | `ConcurrencyTests.Concurrent_reservations_never_oversell_the_available_stock`, `ConcurrencyTests.Concurrent_changes_to_the_same_order_keep_the_totals_consistent` |
 | REQ-041 | `DomainInvariantProperties.Every_mutation_moves_the_concurrency_token_forward`, `DomainInvariantProperties.Every_order_mutation_moves_the_concurrency_token_forward`, and `OrderAggregateConcurrencyProbe.Two_concurrent_modifications_to_the_same_order_trigger_optimistic_concurrency_conflict_and_prevent_lost_updates` |
 | REQ-042 | `OrderFlowTests.Dashboard_metrics_stay_consistent_with_the_orders_that_produced_them` aggregates in SQL and compares against the orders that produced the figures. |
+
+## Stock race
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-070 | `StockRaceTests.A_race_never_sells_more_units_than_exist_and_balances_to_the_unit` |
+| REQ-071 | `StockRaceTests.A_race_with_more_units_than_buyers_sells_to_everyone` (conflicts are retried until every buyer has a final answer) and the `insufficient_stock` assertion in the 24-vs-5 race |
+| REQ-072 | `StockRaceTests.A_race_never_sells_more_units_than_exist_and_balances_to_the_unit` |
+| REQ-073 | `StockRaceTests.A_race_outside_the_allowed_range_is_rejected_with_400` (four boundary cases) |
 
 ## HTTP contract
 
