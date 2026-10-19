@@ -1,7 +1,7 @@
 /** Arranque de la aplicación: shell, navegación, tema, paleta de comandos y estado global. */
 
 import { html, icon, raw, $, delegate } from "./dom.js";
-import { api, isDemoMode, resetDemoDatabase } from "./api.js";
+import { api, isDemoMode, resetDemoDatabase, onTrace } from "./api.js";
 import { defineRoute, onRouteChange, startRouter, navigate, currentPath } from "./router.js";
 import { getState, setState, subscribe, setActiveOrder, clearActiveOrder } from "./state.js";
 import { openOrderPanel } from "./order-panel.js";
@@ -35,6 +35,29 @@ const applyTheme = (theme) => {
   button.innerHTML = icon(resolved === "dark" ? "sun" : "moon", { size: 16 });
   button.setAttribute("aria-label", resolved === "dark" ? "Activar tema claro" : "Activar tema oscuro");
 };
+
+/* --------------------------------------------------------------------------
+   Aviso de modo demostración
+
+   En un host estático no hay API .NET detrás: el panel habla con el motor de
+   dominio del navegador. Decirlo de forma visible es parte del contrato de la
+   demo — quien la evalúa debe saber qué está ejecutando antes de sacar
+   conclusiones sobre el backend.
+   -------------------------------------------------------------------------- */
+const demoBanner = () => html`
+  <div class="demo-banner" data-demo-banner hidden>
+    <span class="demo-banner__mark">${raw(icon("info", { size: 15 }))}</span>
+    <p class="demo-banner__text">
+      <strong>Modo demostración.</strong> Las reglas se ejecutan en un motor de dominio
+      dentro del navegador, no contra la API .NET. El backend real, con SQLite y
+      concurrencia optimista, se levanta con <code class="mono">docker run</code>.
+    </p>
+    <a class="btn btn--sm" href="https://github.com/Nain9Dev/NainOrder#puesta-en-marcha"
+       target="_blank" rel="noopener">
+      Ejecutar el backend ${raw(icon("external", { size: 12 }))}
+    </a>
+  </div>
+`;
 
 /* --------------------------------------------------------------------------
    Shell
@@ -106,6 +129,8 @@ const shell = () => html`
                   aria-label="Cambiar tema"></button>
         </div>
       </header>
+
+      ${raw(demoBanner())}
 
       <main class="content" id="main-content" tabindex="-1"></main>
     </div>
@@ -291,12 +316,20 @@ const toggleTheme = () => {
    -------------------------------------------------------------------------- */
 const monitorHealth = () => {
   const node = $("[data-health]");
+  const banner = $("[data-demo-banner]");
+
+  // El modo demostración también se activa a posteriori, cuando una petición falla
+  // y el cliente conmuta al motor del navegador. El aviso se reevalúa en cada
+  // comprobación para que no dependa de lo que se supiera al primer pintado.
+  const syncBanner = () => { banner.hidden = !isDemoMode(); };
 
   const check = async () => {
+    syncBanner();
+
     if (isDemoMode()) {
       node.dataset.painted = "true";
       node.innerHTML = html`
-        <span class="pulse-dot"></span> Demo interactiva (Navegador)
+        <span class="pulse-dot"></span> Motor de dominio en el navegador
       `;
       setState({ apiHealthy: true });
       return;
@@ -321,6 +354,9 @@ const monitorHealth = () => {
   };
 
   check();
+  // La conmutación al motor del navegador ocurre dentro de una petición, así que el
+  // aviso se reevalúa con cada traza en lugar de esperar al siguiente sondeo.
+  onTrace(syncBanner);
   // Un sondeo espaciado basta para un panel: no conviene añadir ruido a la traza.
   setInterval(check, 30_000);
 };
