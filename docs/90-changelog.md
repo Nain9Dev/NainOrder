@@ -57,6 +57,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 - Paying an order with no lines was accepted.
 - `SQLitePCLRaw.lib.e_sqlite3` was pulled in transitively at a version with a known high-severity
   vulnerability; a patched version is now pinned explicitly.
+- The container build had been broken since central package management was introduced: the
+  Dockerfile copied the four `.csproj` files but not `Directory.Build.props` or
+  `Directory.Packages.props`, where `TargetFramework` and every package version now live, so
+  `dotnet restore` failed with `NETSDK1013`. The container job had been red on `main` for four
+  consecutive runs without blocking anything, because `main` carries no branch protection.
 - The documented test count was wrong in four places (badge, README, traceability matrix and task
   log), all understating the real figure. The suite reports 76.
 - The transaction sequence diagram in the README described an `If-Match`/`ETag` exchange that does

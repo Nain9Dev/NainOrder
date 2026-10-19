@@ -40,6 +40,7 @@
 | T-027 | Make `dom.js` compose templates safely so nested `html` does not need `raw()` | `[A]` | The architecture view renders its markup instead of printing it, and a test asserts it. Closes G-4 |
 | T-028 | Emit security response headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, HSTS) | `[A]` | An integration test asserts the headers. Closes G-5 |
 | T-029 | Restrict trusted proxies so the rate limiter partition key cannot be spoofed via `X-Forwarded-For` | `[A]` | Closes G-1 |
+| T-030 | Protect `main`: require a pull request and a green pipeline before merge | `[H]` | A push straight to `main`, or a merge over a red run, is refused by GitHub. Closes G-9 |
 
 ## Handoff
 
