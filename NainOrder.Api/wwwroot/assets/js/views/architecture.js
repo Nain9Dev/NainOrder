@@ -95,13 +95,13 @@ const markup = (stateMachine) => html`
         traza real de las llamadas que esta interfaz hace contra la API.
       </p>
     </div>
-    ${isDemoMode()
+    ${raw(isDemoMode()
       ? html`<a class="btn" href="https://github.com/Nain9Dev/NainOrder" target="_blank" rel="noopener">
           ${raw(icon("book", { size: 15 }))} Código en GitHub ${raw(icon("external", { size: 13 }))}
         </a>`
       : html`<a class="btn" href="/swagger" target="_blank" rel="noopener">
           ${raw(icon("book", { size: 15 }))} Abrir Swagger ${raw(icon("external", { size: 13 }))}
-        </a>`}
+        </a>`)}
   </section>
 
   <div class="grid grid--layers">

@@ -723,6 +723,181 @@
   white-space: nowrap;
 }
 
+/* --------------------------------------------------------------------------
+   Carrera de stock
+   -------------------------------------------------------------------------- */
+.race {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.race__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-5);
+}
+
+.race__control {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 200px;
+  flex: 1 1 200px;
+}
+
+.race__control-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.race__control-label strong {
+  color: var(--text-primary);
+  margin-left: var(--space-1);
+}
+
+.race__control input[type="range"] {
+  width: 100%;
+  accent-color: var(--brand-2);
+}
+
+.race__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: var(--space-2);
+}
+
+.race__tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-default);
+  background: var(--surface-2);
+  animation: race-pop var(--duration-base) var(--ease-out) both;
+  animation-delay: calc(var(--i) * 18ms);
+}
+
+.race__tile[data-outcome="won"] {
+  background: var(--success);
+  border-color: transparent;
+}
+
+.race__tile[data-outcome="rejected"] {
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+  border-color: var(--danger);
+}
+
+.race__tile sup {
+  position: absolute;
+  inset: auto 3px 1px auto;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-inverse);
+}
+
+.race__tile[data-outcome="rejected"] sup {
+  color: var(--danger);
+}
+
+@keyframes race-pop {
+  from { opacity: 0; transform: scale(0.6); }
+}
+
+.race__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-3);
+}
+
+.race__stats > div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+}
+
+.race__stats .numeric {
+  font-size: var(--text-xl);
+  font-weight: 650;
+}
+
+.race__stats small {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.race__stats [data-tone="win"] .numeric { color: var(--success); }
+.race__stats [data-tone="lose"] .numeric { color: var(--danger); }
+
+.race__verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+
+.race__verdict[data-balanced="false"] {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.race__verdict-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  color: var(--text-inverse);
+}
+
+.race__verdict[data-balanced="false"] .race__verdict-icon {
+  background: var(--danger);
+}
+
+.race__verdict-title {
+  font-weight: 650;
+}
+
+.race__verdict-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.race__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.race__legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: var(--space-1);
+  border-radius: 3px;
+  background: var(--success);
+}
+
+.race__legend i[data-outcome="rejected"] {
+  background: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .race__tile { animation: none; }
+}
+
 @media (max-width: 620px) {
   .distribution__row {
     grid-template-columns: 100px minmax(0, 1fr) auto;

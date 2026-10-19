@@ -719,5 +719,36 @@ export async function mockDispatch(method, path, { body, query } = {}) {
     };
   }
 
+  // --------------------------------------------------------------------------
+  // STOCK RACE — sequential here: a single JS thread cannot race, so this answers the same
+  // shape as the API but proves nothing about concurrency. The panel says so (REQ-074).
+  // --------------------------------------------------------------------------
+  if (method === "POST" && pathname === "/demo/stock-race") {
+    const buyers = Number(body?.buyers);
+    const units = Number(body?.units);
+
+    if (!(buyers >= 2 && buyers <= 64 && units >= 1 && units <= 32)) {
+      throw { status: 400, title: "Invalid request data", detail: "buyers must be 2..64 and units 1..32.", code: "invalid_data" };
+    }
+
+    const sold = Math.min(buyers, units);
+    const results = Array.from({ length: buyers }, (_, index) =>
+      index < sold
+        ? { buyer: index + 1, outcome: "won", code: null, attempts: 1 }
+        : { buyer: index + 1, outcome: "rejected", code: "insufficient_stock", attempts: 1 });
+
+    return {
+      product: "Last-unit sneaker",
+      units,
+      buyers,
+      sold,
+      rejected: buyers - sold,
+      remaining: units - sold,
+      balanced: true,
+      elapsedMilliseconds: 0,
+      results
+    };
+  }
+
   throw { status: 404, title: "No encontrado", detail: `Ruta ${method} ${pathname} no implementada.` };
 }

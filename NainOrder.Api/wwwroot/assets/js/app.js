@@ -12,11 +12,13 @@ import { dashboardView } from "./views/dashboard.js";
 import { catalogView } from "./views/catalog.js";
 import { ordersView } from "./views/orders.js";
 import { architectureView } from "./views/architecture.js";
+import { raceView } from "./views/race.js";
 
 const NAV = [
   { path: "/panel", label: "Panel", icon: "dashboard", view: dashboardView },
   { path: "/catalogo", label: "Catálogo", icon: "catalog", view: catalogView },
   { path: "/pedidos", label: "Pedidos", icon: "orders", view: ordersView },
+  { path: "/carrera", label: "Carrera de stock", icon: "race", view: raceView },
   { path: "/arquitectura", label: "Arquitectura", icon: "architecture", view: architectureView }
 ];
 

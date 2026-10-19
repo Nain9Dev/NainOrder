@@ -126,6 +126,45 @@
         }
       }
     },
+    "/api/Demo/stock-race": {
+      "post": {
+        "tags": [
+          "Demo"
+        ],
+        "summary": "Runs the \u0022a unit can never be sold twice\u0022 claim on demand: \u0060buyers\u0060 independent buyers\r\nrace for \u0060units\u0060 in stock, each in its own order, scope and transaction, released at the\r\nsame instant. The verdict is computed from the persisted product, not from the answers.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockRaceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockRaceRequest"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/StockRaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockRaceResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Meta/order-state-machine": {
       "get": {
         "tags": [
@@ -1503,6 +1542,89 @@
           }
         },
         "additionalProperties": false
+      },
+      "StockRaceBuyerDto": {
+        "type": "object",
+        "properties": {
+          "buyer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "attempts": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Outcome of one buyer: \u0060won\u0060 a unit, or was \u0060rejected\u0060 with a stable error code.\r\n\u0060Attempts\u0060 counts tries; more than one means the buyer lost a race and retried."
+      },
+      "StockRaceRequest": {
+        "type": "object",
+        "properties": {
+          "buyers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "units": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Parameters of a stock race: how many buyers compete for how many units."
+      },
+      "StockRaceResultDto": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "string",
+            "nullable": true
+          },
+          "units": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "buyers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rejected": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remaining": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "balanced": {
+            "type": "boolean"
+          },
+          "elapsedMilliseconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockRaceBuyerDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Verdict of a stock race. \u0060Balanced\u0060 is computed from the persisted product."
       },
       "TopProductDto": {
         "type": "object",

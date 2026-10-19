@@ -253,6 +253,9 @@
 }
 
 .content {
+  /* The router scrolls the outlet into view on navigation; without this margin its first
+     lines land underneath the sticky top bar. */
+  scroll-margin-top: var(--topbar-height);
   flex: 1;
   width: 100%;
   max-width: var(--content-max);
