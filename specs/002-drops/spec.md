@@ -1,6 +1,6 @@
 # 002 — Drops
 
-**Status:** Draft — pending owner approval. Changes the product scope: see [ADR-0008](../../docs/30-decisions/ADR-0008-drops-with-expiring-holds.md) and the open questions Q-005 to Q-007.
+**Status:** Approved by the owner. Changes the product scope: see [ADR-0008](../../docs/30-decisions/ADR-0008-drops-with-expiring-holds.md); Q-005 to Q-007 are resolved in `docs/11-open-questions.md`.
 
 ## Problem
 

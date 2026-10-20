@@ -225,14 +225,185 @@ class MockDatabase {
 
 export const mockDb = new MockDatabase();
 
+/* --------------------------------------------------------------------------
+   Drops en memoria. Mismas reglas y misma forma que la API .NET, pero en un solo hilo:
+   no demuestran concurrencia. Viven solo en la sesión de la pestaña.
+   -------------------------------------------------------------------------- */
+const mockDrops = new Map();
+
+const dropError = (status, code, title, detail) => ({ status, code, title, detail });
+
+const dropNow = () => Date.now();
+
+const dropCounts = (drop, now) => {
+  const sold = drop.holds.filter((h) => h.state === "Confirmed").reduce((s, h) => s + h.quantity, 0);
+  const held = drop.holds
+    .filter((h) => h.state === "Active" && Date.parse(h.expiresAt) > now)
+    .reduce((s, h) => s + h.quantity, 0);
+  return { sold, held, available: drop.totalUnits - sold - held };
+};
+
+const mapDrop = (drop, token) => {
+  const now = dropNow();
+  const { sold, held, available } = dropCounts(drop, now);
+  const status = now < Date.parse(drop.opensAt) ? "Scheduled" : available === 0 ? "SoldOut" : "Live";
+
+  return {
+    id: drop.id,
+    productId: drop.productId,
+    productName: drop.productName,
+    productSku: drop.productSku,
+    unitPrice: drop.unitPrice,
+    totalUnits: drop.totalUnits,
+    available,
+    held,
+    sold,
+    status,
+    opensAt: drop.opensAt,
+    perBuyerLimit: drop.perBuyerLimit,
+    holdSeconds: drop.holdSeconds,
+    serverTime: new Date(now).toISOString(),
+    myHolds: token
+      ? drop.holds.filter((h) => h.buyerToken === token).map(({ buyerToken, ...hold }) => ({
+          ...hold,
+          state: hold.state === "Active" && Date.parse(hold.expiresAt) <= now ? "Expired" : hold.state
+        }))
+      : []
+  };
+};
+
+const dispatchDrops = (method, pathname, { body, headers }) => {
+  const token = headers?.["X-Buyer-Token"] || null;
+
+  if (method === "GET" && pathname === "/drops") {
+    return [...mockDrops.values()].reverse().slice(0, 20).map((d) => mapDrop(d, null));
+  }
+
+  if (method === "POST" && pathname === "/drops") {
+    const product = mockDb.products.find((p) => p.id === body?.productId);
+    if (!product) throw dropError(404, "not_found", "Resource not found", "Producto no encontrado.");
+
+    const { totalUnits, perBuyerLimit, holdSeconds } = body;
+    if (!(totalUnits >= 1 && totalUnits <= 1000 && perBuyerLimit >= 1 && perBuyerLimit <= totalUnits &&
+          holdSeconds >= 5 && holdSeconds <= 3600)) {
+      throw dropError(400, "invalid_data", "Invalid request data", "Configuración de drop no válida.");
+    }
+
+    const drop = {
+      id: mockDb.generateId(),
+      productId: product.id,
+      productName: product.name,
+      productSku: product.sku,
+      unitPrice: product.price,
+      totalUnits,
+      perBuyerLimit,
+      holdSeconds,
+      opensAt: new Date(dropNow() + (body.opensInSeconds || 0) * 1000).toISOString(),
+      holds: []
+    };
+    mockDrops.set(drop.id, drop);
+    return mapDrop(drop, null);
+  }
+
+  const match = pathname.match(/^\/drops\/([^/]+)(?:\/holds(?:\/([^/]+)\/confirm)?)?$/);
+  if (!match) return undefined;
+
+  const drop = mockDrops.get(match[1]);
+  if (!drop) throw dropError(404, "not_found", "Resource not found", `Drop ${match[1]} no existe.`);
+
+  if (method === "GET" && pathname === `/drops/${drop.id}`) return mapDrop(drop, token);
+
+  if (!token) throw dropError(400, "buyer_token_required", "Buyer token required", "Falta el identificador de visitante.");
+  const now = dropNow();
+
+  if (method === "POST" && pathname === `/drops/${drop.id}/holds`) {
+    const quantity = Number(body?.quantity);
+    if (!(quantity >= 1)) throw dropError(400, "invalid_data", "Invalid request data", "Cantidad no válida.");
+    if (now < Date.parse(drop.opensAt)) {
+      throw dropError(409, "drop_not_live", "Drop is not live", "El drop aún no ha abierto.");
+    }
+
+    const owned = drop.holds
+      .filter((h) => h.buyerToken === token &&
+        (h.state === "Confirmed" || (h.state === "Active" && Date.parse(h.expiresAt) > now)))
+      .reduce((s, h) => s + h.quantity, 0);
+    if (owned + quantity > drop.perBuyerLimit) {
+      throw dropError(409, "buyer_limit_reached", "Buyer limit reached", `Límite de ${drop.perBuyerLimit} por comprador.`);
+    }
+
+    const { available } = dropCounts(drop, now);
+    if (quantity > available) {
+      throw dropError(409, "insufficient_stock", "Insufficient stock", `Solo quedan ${available} unidades.`);
+    }
+
+    const hold = {
+      id: mockDb.generateId(),
+      buyerToken: token,
+      quantity,
+      createdAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + drop.holdSeconds * 1000).toISOString(),
+      state: "Active",
+      orderId: null
+    };
+    drop.holds.push(hold);
+    const { buyerToken, ...dto } = hold;
+    return dto;
+  }
+
+  const holdId = match[2];
+  if (method === "POST" && holdId) {
+    const hold = drop.holds.find((h) => h.id === holdId && h.buyerToken === token);
+    if (!hold) throw dropError(404, "hold_not_found", "Hold not found", "Reserva no encontrada.");
+    if (hold.state === "Confirmed") throw dropError(409, "hold_not_active", "Hold not active", "La reserva ya está confirmada.");
+    if (hold.state === "Expired" || Date.parse(hold.expiresAt) <= now) {
+      throw dropError(409, "hold_expired", "Hold expired", "La reserva ha caducado.");
+    }
+
+    const customer = mockDb.customers[0];
+    const order = {
+      id: mockDb.generateId(),
+      reference: mockDb.generateReference(),
+      customerId: customer.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      status: "Paid",
+      createdAt: new Date(now).toISOString(),
+      paidAt: new Date(now).toISOString(),
+      shippedAt: null,
+      cancelledAt: null,
+      items: [{
+        productId: drop.productId,
+        productName: drop.productName,
+        productSku: drop.productSku,
+        unitPrice: drop.unitPrice,
+        quantity: hold.quantity,
+        totalPrice: drop.unitPrice * hold.quantity
+      }]
+    };
+    mockDb.orders.unshift(order);
+    mockDb.save();
+
+    hold.state = "Confirmed";
+    hold.orderId = order.id;
+    return mockDb.mapOrderDto(order);
+  }
+
+  return undefined;
+};
+
 /** Despachador de peticiones simuladas en memoria. */
-export async function mockDispatch(method, path, { body, query } = {}) {
+export async function mockDispatch(method, path, { body, query, headers } = {}) {
   // Simulación de latencia realista en cliente (8-24 ms)
   await new Promise((resolve) => setTimeout(resolve, 8 + Math.random() * 16));
 
   const url = new URL(path, "http://localhost");
   const pathname = url.pathname.replace(/^\/api/, "");
   const searchParams = query ? new URLSearchParams(query) : url.searchParams;
+
+  if (pathname === "/drops" || pathname.startsWith("/drops/")) {
+    const result = dispatchDrops(method, pathname, { body, headers });
+    if (result !== undefined) return result;
+  }
 
   // --------------------------------------------------------------------------
   // PRODUCTS

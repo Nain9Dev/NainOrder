@@ -11,4 +11,4 @@ Records of significant architectural and design decisions for NainOrder.
 | [ADR-0005](ADR-0005-problem-details-error-contract.md) | RFC 7807 Problem Details error contract | Proposed |
 | [ADR-0006](ADR-0006-dependency-free-client-panel.md) | Dependency-free client panel | Proposed |
 | [ADR-0007](ADR-0007-optimistic-concurrency-on-order-aggregate.md) | Optimistic concurrency on the order aggregate | Proposed |
-| [ADR-0008](ADR-0008-drops-with-expiring-holds.md) | Drops with expiring holds | Proposed |
+| [ADR-0008](ADR-0008-drops-with-expiring-holds.md) | Drops with expiring holds | Approved |

@@ -18,6 +18,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 
+// Returns the units of unconfirmed drop holds shortly after their window ends. Correctness does
+// not depend on it (reads apply the clock themselves); it keeps stored state and streams fresh.
+builder.Services.AddHostedService<HoldExpirySweeper>();
+
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 

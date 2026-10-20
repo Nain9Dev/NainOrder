@@ -35,6 +35,18 @@ public interface ICustomerService
     Task<IReadOnlyList<CustomerDto>> GetAllCustomersAsync(CancellationToken cancellationToken = default);
 }
 
+public interface IDropService
+{
+    Task<DropDto> CreateAsync(CreateDropRequest request, CancellationToken cancellationToken = default);
+    Task<DropDto> GetAsync(Guid dropId, string? buyerToken, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DropDto>> ListAsync(CancellationToken cancellationToken = default);
+    Task<HoldDto> TakeAsync(Guid dropId, string buyerToken, TakeUnitsRequest request, CancellationToken cancellationToken = default);
+    Task<OrderDto> ConfirmAsync(Guid dropId, Guid holdId, string buyerToken, CancellationToken cancellationToken = default);
+
+    /// <summary>Expires every hold whose window has ended, across all drops. Returns how many.</summary>
+    Task<int> ExpireDueHoldsAsync(CancellationToken cancellationToken = default);
+}
+
 public interface IDashboardService
 {
     Task<DashboardStatsDto> GetStatsAsync(CancellationToken cancellationToken = default);

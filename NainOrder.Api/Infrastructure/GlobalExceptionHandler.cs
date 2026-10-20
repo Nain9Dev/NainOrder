@@ -70,6 +70,12 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     {
         NotFoundException e => (StatusCodes.Status404NotFound, e.Code, "Resource not found"),
         OrderItemNotFoundException e => (StatusCodes.Status404NotFound, e.Code, "Order line not found"),
+        HoldNotFoundException e => (StatusCodes.Status404NotFound, e.Code, "Hold not found"),
+
+        DropNotLiveException e => (StatusCodes.Status409Conflict, e.Code, "Drop is not live"),
+        BuyerLimitReachedException e => (StatusCodes.Status409Conflict, e.Code, "Buyer limit reached"),
+        HoldExpiredException e => (StatusCodes.Status409Conflict, e.Code, "Hold expired"),
+        HoldNotActiveException e => (StatusCodes.Status409Conflict, e.Code, "Hold not active"),
 
         ConflictException e => (StatusCodes.Status409Conflict, e.Code, "Conflict"),
         InsufficientStockException e => (StatusCodes.Status409Conflict, e.Code, "Insufficient stock"),

@@ -1,6 +1,6 @@
 # ADR-0008 — Drops with expiring holds
 
-**Status:** Proposed
+**Status:** Approved
 
 ## Context
 

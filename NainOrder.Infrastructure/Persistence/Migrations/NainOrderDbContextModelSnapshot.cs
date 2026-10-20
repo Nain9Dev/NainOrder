@@ -43,6 +43,92 @@ namespace NainOrder.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("NainOrder.Domain.Entities.Drop", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HoldSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("OpensAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PerBuyerLimit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProductSku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalUnits")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("UnitPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Drops");
+                });
+
+            modelBuilder.Entity("NainOrder.Domain.Entities.Hold", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BuyerToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("DropId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("State")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DropId", "BuyerToken");
+
+                    b.HasIndex("State", "ExpiresAt");
+
+                    b.ToTable("Holds");
+                });
+
             modelBuilder.Entity("NainOrder.Domain.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -177,6 +263,24 @@ namespace NainOrder.Infrastructure.Persistence.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("NainOrder.Domain.Entities.Drop", b =>
+                {
+                    b.HasOne("NainOrder.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NainOrder.Domain.Entities.Hold", b =>
+                {
+                    b.HasOne("NainOrder.Domain.Entities.Drop", null)
+                        .WithMany("Holds")
+                        .HasForeignKey("DropId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("NainOrder.Domain.Entities.Order", b =>
                 {
                     b.HasOne("NainOrder.Domain.Entities.Customer", null)
@@ -199,6 +303,11 @@ namespace NainOrder.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("NainOrder.Domain.Entities.Drop", b =>
+                {
+                    b.Navigation("Holds");
                 });
 
             modelBuilder.Entity("NainOrder.Domain.Entities.Order", b =>

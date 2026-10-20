@@ -1,11 +1,11 @@
 # 002 — Tasks
 
-Blocked until the owner approves the spec, [ADR-0008](../../docs/30-decisions/ADR-0008-drops-with-expiring-holds.md)
-and answers Q-005 to Q-007. Labels: `[A]` agent alone, `[M]` mixed, `[H]` owner only.
+Spec and [ADR-0008](../../docs/30-decisions/ADR-0008-drops-with-expiring-holds.md) approved; Q-005 to Q-007
+resolved. Phase 1 is T-040 to T-045. Labels: `[A]` agent alone, `[M]` mixed, `[H]` owner only.
 
 | ID | Task | Label | Done when |
 | :--- | :--- | :--- | :--- |
-| T-040 | Approve scope change, ADR-0008 and Q-005 to Q-007 | `[H]` | Statuses updated in `docs/` |
+| T-040 | Approve scope change, ADR-0008 and Q-005 to Q-007 | `[H]` | ✅ Statuses updated in `docs/` |
 | T-041 | `Drop` and `Hold` domain with `TimeProvider`, property tests first | `[A]` | Invariant REQ-085 holds for generated sequences |
 | T-042 | `DropService` and persistence, migration `AddDrops` | `[A]` | Concurrency test: never more than `TotalUnits` held plus sold |
 | T-043 | Hold expiry, lazy plus background sweeper | `[A]` | Clock-controlled test returns units after the window |

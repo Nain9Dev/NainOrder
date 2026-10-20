@@ -38,6 +38,19 @@ public interface IProductRepository
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
 }
 
+public interface IDropRepository
+{
+    /// <summary>Loads the drop with its holds, tracked: it is about to be mutated.</summary>
+    Task<Drop?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Drop>> GetRecentAsync(int count, CancellationToken cancellationToken = default);
+
+    /// <summary>Drops that still carry an active hold whose window has ended at <paramref name="now"/>.</summary>
+    Task<IReadOnlyList<Drop>> GetWithDueHoldsAsync(DateTime now, CancellationToken cancellationToken = default);
+
+    Task AddAsync(Drop drop, CancellationToken cancellationToken = default);
+}
+
 public interface ICustomerRepository
 {
     Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NainOrder.Application.Common;
 using NainOrder.Domain.Entities;
 
 namespace NainOrder.Infrastructure.Persistence.Seeding;
@@ -41,6 +42,7 @@ public static class DatabaseSeeder
     public static async Task SeedAsync(NainOrderDbContext context, CancellationToken cancellationToken = default)
     {
         var changed = await SeedDemoCustomerAsync(context, cancellationToken);
+        changed |= await SeedAnonymousBuyerAsync(context, cancellationToken);
         changed |= await SeedCustomersAsync(context, cancellationToken);
         changed |= await SeedCatalogAsync(context, cancellationToken);
 
@@ -59,6 +61,18 @@ public static class DatabaseSeeder
         // que rompería el encapsulamiento del dominio en producción.
         var entry = context.Customers.Add(customer);
         entry.Property(nameof(Customer.Id)).CurrentValue = DemoCustomerId;
+
+        return true;
+    }
+
+    /// <summary>The single customer all drop orders belong to: buyers are anonymous (Q-005).</summary>
+    private static async Task<bool> SeedAnonymousBuyerAsync(NainOrderDbContext context, CancellationToken cancellationToken)
+    {
+        if (await context.Customers.AnyAsync(c => c.Id == DropDefaults.AnonymousBuyerId, cancellationToken))
+            return false;
+
+        var entry = context.Customers.Add(new Customer("Anonymous drop buyer", "drop-buyers@naindev.com"));
+        entry.Property(nameof(Customer.Id)).CurrentValue = DropDefaults.AnonymousBuyerId;
 
         return true;
     }
