@@ -168,6 +168,30 @@ export interface StatusBreakdownDto {
   amount?: number;
 }
 
+export interface StockRaceBuyerDto {
+  buyer?: number;
+  outcome?: string;
+  code?: string;
+  attempts?: number;
+}
+
+export interface StockRaceRequest {
+  buyers?: number;
+  units?: number;
+}
+
+export interface StockRaceResultDto {
+  product?: string;
+  units?: number;
+  buyers?: number;
+  sold?: number;
+  rejected?: number;
+  remaining?: number;
+  balanced?: boolean;
+  elapsedMilliseconds?: number;
+  results?: StockRaceBuyerDto[];
+}
+
 export interface TopProductDto {
   productId?: string;
   name?: string;

@@ -28,7 +28,7 @@ const skeleton = () => html`
   </div>
 `;
 
-const kpiCard = ({ modifier, label, iconName, value, meta, raw: rawValue, format }) => html`
+const kpiCard = ({ modifier, label, iconName, value, meta, rawValue, format }) => html`
   <article class="kpi ${modifier}">
     <p class="kpi__label">${raw(icon(iconName, { size: 14 }))} ${label}</p>
     <p class="kpi__value" data-count="${rawValue}" data-format="${format}">${value}</p>

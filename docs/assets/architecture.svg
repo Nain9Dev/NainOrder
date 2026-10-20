@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-labelledby="t d">
+  <title id="t">NainOrder architecture</title>
+  <desc id="d">Four nested layers. Dependencies point inwards: Api and Infrastructure depend on Application, Application depends on Domain, Domain depends on nothing.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#8b93ab"/>
+    </marker>
+    <style>
+      text { font-family: "Segoe UI", Inter, system-ui, sans-serif; fill: #e8eaf3; }
+      .sub { fill: #98a0b8; font-size: 13px; }
+      .name { font-size: 17px; font-weight: 650; }
+      .tag { font-size: 12px; fill: #c9cee0; }
+    </style>
+  </defs>
+
+  <rect width="960" height="420" rx="20" fill="#0b0d14"/>
+  <rect x="1" y="1" width="958" height="418" rx="19" fill="none" stroke="url(#g)" stroke-opacity=".45"/>
+
+  <!-- Layers, outermost first -->
+  <rect x="32" y="32" width="520" height="356" rx="22" fill="#12151f" stroke="#2a3042"/>
+  <text x="56" y="64" class="name">NainOrder.Api</text>
+  <text x="56" y="84" class="sub">REST controllers · RFC 7807 errors · serves the panel</text>
+
+  <rect x="72" y="104" width="440" height="264" rx="20" fill="#161a27" stroke="#2f3650"/>
+  <text x="96" y="136" class="name">NainOrder.Infrastructure</text>
+  <text x="96" y="156" class="sub">EF Core · SQLite · cents ↔ INTEGER</text>
+
+  <rect x="112" y="176" width="360" height="172" rx="18" fill="#1a1f30" stroke="#3a4266"/>
+  <text x="136" y="208" class="name">NainOrder.Application</text>
+  <text x="136" y="228" class="sub">Use cases · Unit of Work · DTOs</text>
+
+  <rect x="152" y="248" width="280" height="80" rx="16" fill="url(#g)"/>
+  <text x="176" y="280" class="name" style="fill:#fff">NainOrder.Domain</text>
+  <text x="176" y="302" class="sub" style="fill:#eef0ff">Order · Product · state machine · 0 packages</text>
+
+  <!-- Reading guide -->
+  <g transform="translate(600 0)">
+    <text x="0" y="74" class="name">Dependencies point inwards</text>
+    <text x="0" y="98" class="sub">Enforced by project references and by</text>
+    <text x="0" y="118" class="sub">NetArchTest in CI — not by convention.</text>
+
+    <path d="M0 160 H300" stroke="#8b93ab" stroke-width="2" marker-end="url(#a)"/>
+    <text x="0" y="150" class="tag">Api  →  Application  →  Domain</text>
+
+    <g transform="translate(0 200)">
+      <circle cx="8" cy="8" r="6" fill="#34d399"/>
+      <text x="26" y="13" class="tag">Domain: no EF Core, no ASP.NET, no DI</text>
+      <circle cx="8" cy="40" r="6" fill="#6366f1"/>
+      <text x="26" y="45" class="tag">Application: owns the transaction</text>
+      <circle cx="8" cy="72" r="6" fill="#22d3ee"/>
+      <text x="26" y="77" class="tag">Infrastructure: the only code that sees SQL</text>
+      <circle cx="8" cy="104" r="6" fill="#8b5cf6"/>
+      <text x="26" y="109" class="tag">Api: translates errors, holds no business rule</text>
+    </g>
+  </g>
+</svg>

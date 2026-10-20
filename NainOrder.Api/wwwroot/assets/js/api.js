@@ -192,6 +192,7 @@ export const api = {
   },
 
   demo: {
-    simulate: () => request("POST", "/demo/simulate-purchase")
+    simulate: () => request("POST", "/demo/simulate-purchase"),
+    stockRace: (buyers, units) => request("POST", "/demo/stock-race", { body: { buyers, units } })
   }
 };
