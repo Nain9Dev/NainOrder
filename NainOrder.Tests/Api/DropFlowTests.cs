@@ -89,6 +89,22 @@ public class DropFlowTests : IClassFixture<NainOrderApiFactory>
     }
 
     [Fact]
+    public async Task Timestamps_are_serialised_as_utc_so_browsers_do_not_read_them_as_local_time()
+    {
+        var drop = await CreateDropAsync(units: 3);
+        await TakeAsync(drop.Id, "buyer-utc");
+
+        var json = await (await _client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"/api/drops/{drop.Id}") { Headers = { { "X-Buyer-Token", "buyer-utc" } } }))
+            .Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+
+        Assert.EndsWith("Z", doc.RootElement.GetProperty("opensAt").GetString());
+        Assert.EndsWith("Z", doc.RootElement.GetProperty("serverTime").GetString());
+        Assert.EndsWith("Z", doc.RootElement.GetProperty("myHolds")[0].GetProperty("expiresAt").GetString());
+    }
+
+    [Fact]
     public async Task A_scheduled_drop_rejects_takes_until_it_opens()
     {
         var drop = await CreateDropAsync(units: 5, opensInSeconds: 120);

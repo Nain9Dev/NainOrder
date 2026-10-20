@@ -222,7 +222,7 @@ export const dropView = {
         $("[data-stats]", stageNode).innerHTML = html`
           <div data-tone="win"><span class="numeric">${fmtNumber(current.available)}</span><small>disponibles</small></div>
           <div><span class="numeric">${fmtNumber(current.held)}</span><small>reservadas</small></div>
-          <div data-tone="lose"><span class="numeric">${fmtNumber(current.sold)}</span><small>vendidas</small></div>
+          <div><span class="numeric">${fmtNumber(current.sold)}</span><small>vendidas</small></div>
         `;
 
         $('[data-action="take"]', stageNode).disabled = busy || current.status !== "Live";

@@ -50,14 +50,21 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy(RateLimitPolicies.Api, httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+    {
+        // A drop is polled every second and its crowd simulator fires dozens of requests at
+        // once, so drops get their own, larger window; everything else keeps 120 per minute.
+        var isDrop = httpContext.Request.Path.StartsWithSegments("/api/drops");
+        var address = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: isDrop ? $"drops:{address}" : address,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 120,
+                PermitLimit = isDrop ? 1_200 : 120,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
 });
 
 // Render y cualquier PaaS terminan TLS por delante: sin esto la app vería http y una IP interna.
@@ -178,6 +185,12 @@ static async Task InitializeDatabaseAsync(WebApplication app)
     try
     {
         await context.Database.MigrateAsync();
+
+        // WAL lets readers proceed while a writer commits. With the default rollback journal, a
+        // crowd of simultaneous buyers (plus the hold sweeper) surfaces "database is locked" as
+        // a 500. The mode is stored in the database file, so this is a no-op after the first run.
+        await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+
         await DatabaseSeeder.SeedAsync(context);
         logger.LogInformation("Database ready at {ConnectionString}", context.Database.GetConnectionString());
     }
