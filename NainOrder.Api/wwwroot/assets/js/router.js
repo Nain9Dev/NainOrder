@@ -18,7 +18,7 @@ export const onRouteChange = (handler) => {
   onChange = handler;
 };
 
-export const currentPath = () => window.location.hash.replace(/^#/, "") || "/panel";
+export const currentPath = () => window.location.hash.replace(/^#/, "") || "/drop";
 
 export const navigate = (path) => {
   if (currentPath() === path) return;
@@ -54,7 +54,7 @@ export const startRouter = (outlet) => {
 
   window.addEventListener("hashchange", run);
 
-  if (!window.location.hash) window.location.hash = "/panel";
+  if (!window.location.hash) window.location.hash = "/drop";
   run();
 
   return run;

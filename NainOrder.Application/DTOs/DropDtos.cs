@@ -36,4 +36,5 @@ public record DropDto(
     int PerBuyerLimit,
     int HoldSeconds,
     DateTime ServerTime,
+    DateTime? NextHoldExpiresAt,
     IReadOnlyList<HoldDto> MyHolds);

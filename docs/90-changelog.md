@@ -8,6 +8,10 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Drop experience (`specs/003-drop-experience`): an animated, wordless landing for the drop, a
+  buyer view and an organizer view of the same drop, and a Spanish/English selector covering the
+  whole panel (dictionaries in `assets/i18n`, parity enforced by `I18nParityTests`). Drops report
+  `nextHoldExpiresAt`.
 - Drops (phase 1 of `specs/002-drops`, ADR-0008): a fixed number of units sold to a crowd through
   short expiring holds, with `/api/drops` endpoints, a `Drop` panel view with a crowd simulator, and
   an in-browser engine for the static demo. REQ-080 to REQ-086 and REQ-088.

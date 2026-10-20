@@ -11,16 +11,21 @@
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-110%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-116%20passing-2ea44f)
 ![Client dependencies](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
 [![Live demo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
 <p align="center">
-  <img src="docs/assets/drop-live.png" alt="A live drop: 56 units, 2 sold, 42 held by a crowd of 40 buyers, 12 still available" width="92%">
+  <img src="docs/assets/drop-story.gif" alt="Animation: a crowd arrives, each unit is held, unconfirmed holds return, everything sells once" width="72%">
 </p>
 
-> **56 units. 40 buyers released at once.** Each unit is *available*, *held* for 60 seconds, or *sold*.
-> Hold it and don't confirm: it goes back to the crowd. Press **Soltar 40 compradores** and watch.
+<p align="center">
+  <img src="docs/assets/drop-live.png" alt="The organizer view of a live drop: 48 units, 3 sold, 40 held by a crowd of 40 buyers, 5 still available" width="92%">
+</p>
+
+> **48 units. 40 buyers released at once.** Each unit is *available*, *held* for 30 seconds, or *sold*.
+> Hold it and don't confirm: it goes back to the crowd. Try it as a **buyer** or an **organizer**, in
+> Spanish or English: open the app and press **Release 40 buyers**.
 
 ---
 
@@ -88,11 +93,11 @@ git clone https://github.com/Nain9Dev/NainOrder.git
 cd NainOrder/NainOrder.Api && dotnet run
 ```
 
-Open <http://localhost:8170> → **Drop** → *Lanzar drop*. Also there: [`/swagger`](http://localhost:8170/swagger)
+Open <http://localhost:8170> → **Try as a buyer** or **Try as an organizer**. Also there: [`/swagger`](http://localhost:8170/swagger)
 and `/health`. No database to install: SQLite creates itself.
 
 ```bash
-dotnet test NainOrder.slnx -c Release          # 110 tests
+dotnet test NainOrder.slnx -c Release          # 116 tests
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 

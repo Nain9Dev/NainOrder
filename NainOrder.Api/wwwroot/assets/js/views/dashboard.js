@@ -6,6 +6,7 @@ import { areaChart, distributionBars } from "../charts.js";
 import { openModal, withBusy } from "../overlay.js";
 import { toastError } from "../toast.js";
 import { openOrderPanel } from "../order-panel.js";
+import { t } from "../i18n.js";
 import {
   fmtMoney, fmtMoneyCompact, fmtNumber, fmtRelative, fmtDuration, statusLabel
 } from "../format.js";
@@ -38,8 +39,11 @@ const kpiCard = ({ modifier, label, iconName, value, meta, rawValue, format }) =
 
 const simulationModal = (result) =>
   openModal({
-    title: "Escenario guiado ejecutado",
-    subtitle: `${result.steps.length} operaciones en ${fmtDuration(result.elapsedMilliseconds)}`,
+    title: t("dash.sim.title"),
+    subtitle: t("dash.sim.subtitle", {
+      count: result.steps.length,
+      duration: fmtDuration(result.elapsedMilliseconds)
+    }),
     size: 620,
     body: html`
       <p style="font-size:var(--text-sm);color:var(--text-secondary)">${result.message}</p>
@@ -64,16 +68,16 @@ const simulationModal = (result) =>
       </div>
 
       <div class="totals">
-        <div class="totals__row"><span>Pedido resultante</span><span class="mono">${result.finalOrder.reference}</span></div>
-        <div class="totals__row"><span>Estado final</span><span>${statusLabel(result.finalOrder.status)}</span></div>
-        <div class="totals__row"><span>Stock restante del producto</span><span>${fmtNumber(result.finalProduct.stockQuantity)} uds.</span></div>
-        <div class="totals__row totals__row--grand"><span>Importe</span><span>${fmtMoney(result.finalOrder.totalAmount)}</span></div>
+        <div class="totals__row"><span>${t("dash.sim.order")}</span><span class="mono">${result.finalOrder.reference}</span></div>
+        <div class="totals__row"><span>${t("dash.sim.status")}</span><span>${statusLabel(result.finalOrder.status)}</span></div>
+        <div class="totals__row"><span>${t("dash.sim.stock")}</span><span>${t("dash.units", { count: fmtNumber(result.finalProduct.stockQuantity) })}</span></div>
+        <div class="totals__row totals__row--grand"><span>${t("dash.sim.amount")}</span><span>${fmtMoney(result.finalOrder.totalAmount)}</span></div>
       </div>
     `,
     footer: html`
-      <span class="card__hint">Todas las reglas las ha validado el dominio, no el controlador.</span>
+      <span class="card__hint">${t("dash.sim.hint")}</span>
       <span class="spacer"></span>
-      <button class="btn btn--primary" type="button" data-overlay-close data-autofocus>Entendido</button>
+      <button class="btn btn--primary" type="button" data-overlay-close data-autofocus>${t("dash.sim.ok")}</button>
     `
   });
 
@@ -90,19 +94,17 @@ const markup = (stats, orders) => {
   return html`
     <section class="section-head">
       <div>
-        <h1 class="section-head__title">Panel de control</h1>
+        <h1 class="section-head__title">${t("dash.title")}</h1>
         <p class="section-head__text">
-          ${isDemoMode()
-            ? "Métricas calculadas por el motor de dominio del navegador. Con la API .NET en marcha, las agrega SQLite sobre importes en céntimos enteros."
-            : "Métricas agregadas en base de datos sobre importes almacenados en céntimos enteros, no calculadas en memoria."}
+          ${isDemoMode() ? t("dash.intro.demo") : t("dash.intro.live")}
         </p>
       </div>
       <div class="row">
         <button class="btn" type="button" data-action="refresh">
-          ${raw(icon("refresh", { size: 15 }))} Actualizar
+          ${raw(icon("refresh", { size: 15 }))} ${t("dash.refresh")}
         </button>
         <button class="btn btn--primary" type="button" data-action="simulate">
-          ${raw(icon("play", { size: 15 }))} Ejecutar escenario guiado
+          ${raw(icon("play", { size: 15 }))} ${t("palette.scenario")}
         </button>
       </div>
     </section>
@@ -112,41 +114,41 @@ const markup = (stats, orders) => {
         [
           kpiCard({
             modifier: "kpi--revenue",
-            label: "Ingresos confirmados",
+            label: t("dash.kpi.revenue"),
             iconName: "euro",
             value: fmtMoneyCompact(stats.confirmedRevenue),
             rawValue: stats.confirmedRevenue,
             format: "money",
-            meta: `Ticket medio ${fmtMoney(stats.averageOrderValue)}`
+            meta: t("dash.kpi.average", { amount: fmtMoney(stats.averageOrderValue) })
           }),
           kpiCard({
             modifier: "kpi--pending",
-            label: "Pendiente de cobro",
+            label: t("dash.kpi.pending"),
             iconName: "clock",
             value: fmtMoneyCompact(stats.pendingRevenue),
             rawValue: stats.pendingRevenue,
             format: "money",
-            meta: `${fmtNumber(stats.totalOrders)} pedidos en total`
+            meta: t("dash.kpi.orders", { count: fmtNumber(stats.totalOrders) })
           }),
           kpiCard({
             modifier: "kpi--orders",
-            label: "Clientes",
+            label: t("dash.kpi.customers"),
             iconName: "users",
             value: fmtNumber(stats.totalCustomers),
             rawValue: stats.totalCustomers,
             format: "number",
-            meta: `${fmtNumber(stats.totalProducts)} referencias en catálogo`
+            meta: t("dash.kpi.products", { count: fmtNumber(stats.totalProducts) })
           }),
           kpiCard({
             modifier: "kpi--stock",
-            label: "Unidades en stock",
+            label: t("dash.kpi.stock"),
             iconName: "boxes",
             value: fmtNumber(stats.totalStockUnits),
             rawValue: stats.totalStockUnits,
             format: "number",
             meta: stats.lowStockProducts > 0
-              ? `${stats.lowStockProducts} referencias bajo mínimos`
-              : "Sin referencias bajo mínimos"
+              ? t("dash.kpi.low", { count: stats.lowStockProducts })
+              : t("dash.kpi.noLow")
           })
         ].join("")
       )}
@@ -156,8 +158,8 @@ const markup = (stats, orders) => {
       <article class="card">
         <header class="card__header">
           <div>
-            <h2 class="card__title">Ingresos confirmados</h2>
-            <p class="card__hint">Últimos 14 días · pedidos pagados, en preparación o enviados</p>
+            <h2 class="card__title">${t("dash.kpi.revenue")}</h2>
+            <p class="card__hint">${t("dash.revenue.hint")}</p>
           </div>
           <span class="tag">${raw(icon("trending", { size: 13 }))}</span>
         </header>
@@ -167,8 +169,8 @@ const markup = (stats, orders) => {
       <article class="card">
         <header class="card__header">
           <div>
-            <h2 class="card__title">Distribución por estado</h2>
-            <p class="card__hint">Todos los estados de la máquina, incluidos los vacíos</p>
+            <h2 class="card__title">${t("dash.dist.title")}</h2>
+            <p class="card__hint">${t("dash.dist.hint")}</p>
           </div>
         </header>
         ${raw(distributionBars(distribution))}
@@ -179,8 +181,8 @@ const markup = (stats, orders) => {
       <article class="card card--flush">
         <header class="card__header" style="padding:var(--space-5) var(--space-5) 0">
           <div>
-            <h2 class="card__title">Pedidos recientes</h2>
-            <p class="card__hint">Pulsa una fila para abrir el detalle y operar sobre el pedido</p>
+            <h2 class="card__title">${t("dash.recent.title")}</h2>
+            <p class="card__hint">${t("dash.recent.hint")}</p>
           </div>
         </header>
 
@@ -190,8 +192,8 @@ const markup = (stats, orders) => {
                 <table class="table">
                   <thead>
                     <tr>
-                      <th>Referencia</th><th>Cliente</th><th>Estado</th>
-                      <th class="align-end">Total</th><th class="align-end">Creado</th>
+                      <th>${t("dash.col.reference")}</th><th>${t("dash.col.customer")}</th><th>${t("dash.col.status")}</th>
+                      <th class="align-end">${t("dash.col.total")}</th><th class="align-end">${t("dash.col.created")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -215,8 +217,8 @@ const markup = (stats, orders) => {
               </div>`
             : html`<div class="empty">
                 <span class="empty__icon">${raw(icon("orders", { size: 22 }))}</span>
-                <p class="empty__title">Todavía no hay pedidos</p>
-                <p class="empty__text">Ejecuta el escenario guiado o añade productos del catálogo a un pedido nuevo.</p>
+                <p class="empty__title">${t("dash.empty.title")}</p>
+                <p class="empty__text">${t("dash.empty.text")}</p>
               </div>`
         )}
       </article>
@@ -224,8 +226,8 @@ const markup = (stats, orders) => {
       <article class="card">
         <header class="card__header">
           <div>
-            <h2 class="card__title">Más vendidos</h2>
-            <p class="card__hint">Por unidades, excluyendo pedidos cancelados</p>
+            <h2 class="card__title">${t("dash.top.title")}</h2>
+            <p class="card__hint">${t("dash.top.hint")}</p>
           </div>
         </header>
 
@@ -240,7 +242,7 @@ const markup = (stats, orders) => {
                           <span class="rank__pos">${index + 1}</span>
                           <div class="rank__body">
                             <p class="rank__name">${product.name}</p>
-                            <p class="rank__meta mono">${product.sku} · ${product.unitsSold} uds.</p>
+                            <p class="rank__meta mono">${product.sku} · ${t("dash.units", { count: product.unitsSold })}</p>
                           </div>
                           <span class="rank__value">${fmtMoney(product.revenue)}</span>
                         </div>
@@ -251,7 +253,7 @@ const markup = (stats, orders) => {
               </div>`
             : html`<div class="empty" style="padding:var(--space-6) var(--space-4)">
                 <span class="empty__icon">${raw(icon("trending", { size: 22 }))}</span>
-                <p class="empty__text">Sin ventas registradas todavía.</p>
+                <p class="empty__text">${t("dash.top.empty")}</p>
               </div>`
         )}
       </article>
@@ -268,8 +270,8 @@ const animateCounters = (container) => {
 };
 
 export const dashboardView = {
-  title: "Panel de control",
-  subtitle: "Estado del motor de pedidos en tiempo real",
+  get title() { return t("dash.title"); },
+  get subtitle() { return t("dash.subtitle"); },
 
   async render(outlet) {
     render(outlet, skeleton());
@@ -283,13 +285,13 @@ export const dashboardView = {
         api.orders.list({ page: 1, pageSize: 6 })
       ]);
     } catch (error) {
-      toastError(error, "No se pudieron cargar las métricas");
+      toastError(error, t("dash.loadFailed"));
       const errorRoot = render(outlet, html`
         <div class="empty">
           <span class="empty__icon">${raw(icon("alert", { size: 22 }))}</span>
-          <p class="empty__title">No hay datos disponibles</p>
-          <p class="empty__text">La API no respondió correctamente. Comprueba que el servicio está en marcha.</p>
-          <button class="btn" type="button" data-action="refresh">Reintentar</button>
+          <p class="empty__title">${t("dash.noData.title")}</p>
+          <p class="empty__text">${t("dash.noData.text")}</p>
+          <button class="btn" type="button" data-action="refresh">${t("dash.retry")}</button>
         </div>
       `);
       delegate(errorRoot, "click", '[data-action="refresh"]', () => this.render(outlet));
@@ -308,7 +310,7 @@ export const dashboardView = {
         // El escenario altera stock y pedidos: el panel deja de ser válido.
         await this.render(outlet);
       } catch (error) {
-        toastError(error, "El escenario guiado falló");
+        toastError(error, t("dash.simFailed"));
       }
     });
 

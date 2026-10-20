@@ -5,6 +5,7 @@
  */
 
 import { html, icon, raw, $$ } from "./dom.js";
+import { t } from "./i18n.js";
 
 const FOCUSABLE =
   'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
@@ -25,7 +26,7 @@ const openOverlay = (kind, { title, subtitle, body = "", footer = "", onMount, s
           ${subtitle ? raw(html`<p class="panel__subtitle">${subtitle}</p>`) : ""}
         </div>
         <button class="btn btn--ghost btn--icon btn--sm panel__close" type="button" data-overlay-close
-                aria-label="Cerrar">${raw(icon("close", { size: 16 }))}</button>
+                aria-label="${t("overlay.close")}">${raw(icon("close", { size: 16 }))}</button>
       </header>
       <div class="panel__body">${raw(body)}</div>
       ${footer ? raw(html`<footer class="panel__footer">${raw(footer)}</footer>`) : ""}
@@ -101,8 +102,8 @@ export const openDrawer = (options) => openOverlay("drawer", options);
 export const confirmAction = ({
   title,
   message,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
+  confirmLabel = t("overlay.confirm"),
+  cancelLabel = t("overlay.cancel"),
   danger = false
 }) =>
   new Promise((resolve) => {

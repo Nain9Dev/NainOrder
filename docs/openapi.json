@@ -1480,6 +1480,11 @@
             "type": "string",
             "format": "date-time"
           },
+          "nextHoldExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "myHolds": {
             "type": "array",
             "items": {

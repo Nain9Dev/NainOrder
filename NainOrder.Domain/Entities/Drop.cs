@@ -71,6 +71,10 @@ public class Drop : AggregateRoot<Guid>
     /// </summary>
     public int AvailableAt(DateTime now) => TotalUnits - SoldUnits - HeldAt(now);
 
+    /// <summary>When the soonest live hold ends, or null if no hold is live. Lets an organiser see pressure ease.</summary>
+    public DateTime? NextHoldExpiryAt(DateTime now) =>
+        _holds.Where(h => h.IsLiveAt(now)).Select(h => (DateTime?)h.ExpiresAt).Min();
+
     public DropStatus StatusAt(DateTime now) =>
         now < OpensAt ? DropStatus.Scheduled
         : AvailableAt(now) == 0 ? DropStatus.SoldOut

@@ -84,6 +84,7 @@ export interface DropDto {
   perBuyerLimit?: number;
   holdSeconds?: number;
   serverTime?: string;
+  nextHoldExpiresAt?: string;
   myHolds?: HoldDto[];
 }
 

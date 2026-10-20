@@ -33,7 +33,9 @@ These are deliberately out of scope. Their absence is a decision, not an oversig
 - **Multi-warehouse or partial fulfilment.** Stock is a single global counter per product.
 - **Order history / event sourcing.** Timestamps per transition are kept; the full audit trail is
   not modelled.
-- **Internationalisation.** The panel's copy is Spanish; the API is locale-neutral.
+- **Locales beyond Spanish and English.** The panel offers ES and EN, chosen by the owner on
+  2026-10-20 ([specs/003-drop-experience](../specs/003-drop-experience/spec.md)); the API is
+  locale-neutral and its errors are machine-readable codes.
 
 ## Constraints
 

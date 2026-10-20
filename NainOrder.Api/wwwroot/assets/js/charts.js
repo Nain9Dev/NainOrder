@@ -5,6 +5,7 @@
 
 import { html, raw } from "./dom.js";
 import { fmtMoney, fmtDateShort } from "./format.js";
+import { t } from "./i18n.js";
 
 const VIEW_WIDTH = 720;
 const VIEW_HEIGHT = 220;
@@ -36,9 +37,9 @@ const buildSmoothPath = (points) => {
 export const areaChart = (series) => {
   if (!series?.length) {
     return html`<svg class="chart" viewBox="0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}" role="img"
-      aria-label="Sin datos de ingresos">
+      aria-label="${t("charts.noData")}">
       <text class="chart__empty" x="${VIEW_WIDTH / 2}" y="${VIEW_HEIGHT / 2}"
-        text-anchor="middle">Sin actividad registrada todavía</text>
+        text-anchor="middle">${t("charts.empty")}</text>
     </svg>`;
   }
 
@@ -77,7 +78,7 @@ export const areaChart = (series) => {
   const hitWidth = stepX || innerWidth;
   const markers = points
     .map((point) => {
-      const tooltip = `${fmtDateShort(point.date)} · ${fmtMoney(point.amount)} · ${point.orders} pedido${point.orders === 1 ? "" : "s"}`;
+      const tooltip = `${fmtDateShort(point.date)} · ${fmtMoney(point.amount)} · ${t(point.orders === 1 ? "charts.orders.one" : "charts.orders.other", { count: point.orders })}`;
       return `
         <rect class="chart__hit" x="${point.x - hitWidth / 2}" y="${PADDING.top}"
               width="${hitWidth}" height="${innerHeight}" tabindex="0" role="img"
@@ -88,7 +89,7 @@ export const areaChart = (series) => {
 
   return html`
     <svg class="chart" viewBox="0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}"
-         role="group" aria-label="Ingresos confirmados por día">
+         role="group" aria-label="${t("charts.revenueByDay")}">
       <defs>
         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="var(--brand-1)" stop-opacity="0.34"/>

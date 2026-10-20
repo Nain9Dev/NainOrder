@@ -88,6 +88,21 @@ public class DropTests
     }
 
     [Fact]
+    public void The_next_expiry_is_the_soonest_live_hold_and_null_when_none_is_live()
+    {
+        var drop = NewDrop(units: 5, perBuyer: 5, holdSeconds: 60);
+        Assert.Null(drop.NextHoldExpiryAt(At(0)));
+
+        drop.Take("buyer-a", 1, At(10));
+        drop.Take("buyer-b", 1, At(20));
+
+        Assert.Equal(At(70), drop.NextHoldExpiryAt(At(30)));
+        // Once the first window ends, the next live one takes over.
+        Assert.Equal(At(80), drop.NextHoldExpiryAt(At(75)));
+        Assert.Null(drop.NextHoldExpiryAt(At(81)));
+    }
+
+    [Fact]
     public void Sweeping_marks_expired_holds_and_reports_how_many()
     {
         var drop = NewDrop(units: 5, perBuyer: 5, holdSeconds: 60);
