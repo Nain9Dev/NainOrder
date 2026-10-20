@@ -80,6 +80,17 @@ enters this table when it is implemented and tested.
 | REQ-086 | When a drop's units are all sold or held, the system shall report it `SoldOut`; when expired holds free units again, it shall report it `Live`. |
 | REQ-088 | If a buyer exceeds the per-buyer limit across holds and orders of one drop, then the system shall reject the request with `409 buyer_limit_reached`. |
 
+## Drop experience
+
+From [specs/003-drop-experience](../specs/003-drop-experience/spec.md). The visual requirements
+(REQ-090 to REQ-094, REQ-096) live in that spec until browser-level tests exist; only what is
+verified by an automated test is listed here.
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-095 | Every user-visible string of the panel shall exist in both Spanish and English with the same placeholders, and a missing or empty one shall fail the build. |
+| REQ-097 | The system shall report, with each drop, when its soonest live hold ends, or nothing when no hold is live. |
+
 ## HTTP contract
 
 | ID | Requirement |

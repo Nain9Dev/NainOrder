@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (110/110 tests)
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (116/116 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -17,6 +17,7 @@ Test suites:
 | `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
 | `Domain.DropTests` | Example-based + property-based | The drop aggregate with an explicit clock: holds, expiry, limits, the held-plus-sold invariant |
 | `Api.DropFlowTests` | Integration, concurrent | Drops over HTTP with a hand-moved clock, a 40-buyer crowd and UTC serialisation |
+| `Api.I18nParityTests` | Contract | Both panel languages define the same keys and placeholders |
 | `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
 | `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
 
@@ -91,6 +92,13 @@ Test suites:
 | REQ-086 | `DropTests.An_unconfirmed_hold_returns_its_units_when_its_window_ends`; `DropFlowTests.An_unconfirmed_hold_expires_and_returns_its_units` |
 | REQ-088 | `DropTests.A_buyer_cannot_exceed_the_per_buyer_limit_across_holds`, `Expired_units_do_not_count_against_the_buyer_limit`; `DropFlowTests.A_buyer_over_the_limit_is_rejected_with_409` |
 
+## Drop experience
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-095 | `I18nParityTests.Spanish_and_English_define_exactly_the_same_keys`, `No_string_is_empty`, `Placeholders_match_between_languages` |
+| REQ-097 | `DropTests.The_next_expiry_is_the_soonest_live_hold_and_null_when_none_is_live`; `DropFlowTests.A_drop_reports_when_its_next_hold_expires` |
+
 ## HTTP contract
 
 | Requirement | Test |
@@ -112,4 +120,10 @@ Test suites:
 
 ## Gaps
 
-None. Every requirement declared in [10-requirements.md](10-requirements.md) is covered by an automated test passing in the Release suite.
+Every requirement declared in [10-requirements.md](10-requirements.md) is covered by an automated test passing in the Release suite.
+
+One known gap, deliberately outside that file: the visual behaviour of the panel in
+[specs/003-drop-experience](../specs/003-drop-experience/spec.md) (REQ-090 to REQ-094, REQ-096:
+landing story, role lenses, language selector, reduced motion). It was verified by hand in a browser
+against the real API and the in-browser engine, in both languages, with no console errors or missing
+translation keys; there is no browser-level test yet (task T-056).
