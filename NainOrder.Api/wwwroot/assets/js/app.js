@@ -1,4 +1,4 @@
-/** Arranque de la aplicación: shell, navegación, tema, paleta de comandos y estado global. */
+/** Application start-up: shell, navigation, theme, language, command palette and global state. */
 
 import { html, icon, raw, $, delegate } from "./dom.js";
 import { api, isDemoMode, resetDemoDatabase, onTrace } from "./api.js";
@@ -7,6 +7,7 @@ import { getState, setState, subscribe, setActiveOrder, clearActiveOrder } from 
 import { openOrderPanel } from "./order-panel.js";
 import { toast } from "./toast.js";
 import { fmtMoney } from "./format.js";
+import { applyStatic, getLocale, loadI18n, locales, setLocale, t } from "./i18n.js";
 
 import { dashboardView } from "./views/dashboard.js";
 import { catalogView } from "./views/catalog.js";
@@ -16,16 +17,16 @@ import { raceView } from "./views/race.js";
 import { dropView } from "./views/drop.js";
 
 const NAV = [
-  { path: "/panel", label: "Panel", icon: "dashboard", view: dashboardView },
-  { path: "/drop", label: "Drop", icon: "ticket", view: dropView },
-  { path: "/catalogo", label: "Catálogo", icon: "catalog", view: catalogView },
-  { path: "/pedidos", label: "Pedidos", icon: "orders", view: ordersView },
-  { path: "/carrera", label: "Carrera de stock", icon: "race", view: raceView },
-  { path: "/arquitectura", label: "Arquitectura", icon: "architecture", view: architectureView }
+  { path: "/drop", labelKey: "nav.drop", icon: "ticket", view: dropView },
+  { path: "/panel", labelKey: "nav.panel", icon: "dashboard", view: dashboardView },
+  { path: "/catalogo", labelKey: "nav.catalog", icon: "catalog", view: catalogView },
+  { path: "/pedidos", labelKey: "nav.orders", icon: "orders", view: ordersView },
+  { path: "/carrera", labelKey: "nav.race", icon: "race", view: raceView },
+  { path: "/arquitectura", labelKey: "nav.arch", icon: "architecture", view: architectureView }
 ];
 
 /* --------------------------------------------------------------------------
-   Tema
+   Theme
    -------------------------------------------------------------------------- */
 const systemPrefersLight = () => window.matchMedia("(prefers-color-scheme: light)").matches;
 
@@ -37,28 +38,26 @@ const applyTheme = (theme) => {
   if (!button) return;
 
   button.innerHTML = icon(resolved === "dark" ? "sun" : "moon", { size: 16 });
-  button.setAttribute("aria-label", resolved === "dark" ? "Activar tema claro" : "Activar tema oscuro");
+  button.setAttribute("aria-label", t(resolved === "dark" ? "shell.theme.toLight" : "shell.theme.toDark"));
 };
 
 /* --------------------------------------------------------------------------
-   Aviso de modo demostración
+   Demo-mode notice
 
-   En un host estático no hay API .NET detrás: el panel habla con el motor de
-   dominio del navegador. Decirlo de forma visible es parte del contrato de la
-   demo — quien la evalúa debe saber qué está ejecutando antes de sacar
-   conclusiones sobre el backend.
+   On a static host there is no .NET API behind the panel: it talks to the in-browser domain
+   engine. Saying so visibly is part of the demo's contract — whoever evaluates it must know
+   what is running before drawing conclusions about the backend.
    -------------------------------------------------------------------------- */
 const demoBanner = () => html`
   <div class="demo-banner" data-demo-banner hidden>
     <span class="demo-banner__mark">${raw(icon("info", { size: 15 }))}</span>
     <p class="demo-banner__text">
-      <strong>Modo demostración.</strong> Las reglas se ejecutan en un motor de dominio
-      dentro del navegador, no contra la API .NET. El backend real, con SQLite y
-      concurrencia optimista, se levanta con <code class="mono">docker run</code>.
+      <strong data-i18n="banner.title"></strong> <span data-i18n="banner.text"></span>
+      <code class="mono">docker run</code>.
     </p>
-    <a class="btn btn--sm" href="https://github.com/Nain9Dev/NainOrder#puesta-en-marcha"
+    <a class="btn btn--sm" href="https://github.com/Nain9Dev/NainOrder#quick-start"
        target="_blank" rel="noopener">
-      Ejecutar el backend ${raw(icon("external", { size: 12 }))}
+      <span data-i18n="banner.cta"></span> ${raw(icon("external", { size: 12 }))}
     </a>
   </div>
 `;
@@ -66,30 +65,42 @@ const demoBanner = () => html`
 /* --------------------------------------------------------------------------
    Shell
    -------------------------------------------------------------------------- */
+const languageSwitch = () => html`
+  <div class="lang" role="group" data-i18n-attr="aria-label:shell.language">
+    ${raw(
+      locales()
+        .map(
+          (code) => html`<button class="lang__btn" type="button" data-lang="${code}"
+                                 aria-pressed="${code === getLocale()}">${code.toUpperCase()}</button>`
+        )
+        .join("")
+    )}
+  </div>
+`;
+
 const shell = () => html`
   <nain-ecosystem-bar current-project="NainOrder"></nain-ecosystem-bar>
-  <a class="skip-link" href="#main-content">Saltar al contenido</a>
-
+  <a class="skip-link" href="#main-content" data-i18n="shell.skip"></a>
 
   <div class="app" data-nav-open="false">
     <div class="nav-scrim" data-action="close-nav" aria-hidden="true"></div>
 
     <aside class="sidebar">
-      <a class="brand" href="#/panel">
+      <a class="brand" href="#/drop">
         <span class="brand__mark">${raw(icon("layers", { size: 21 }))}</span>
         <span>
           <span class="brand__name">NainOrder</span>
-          <span class="brand__tag">Motor de pedidos</span>
+          <span class="brand__tag" data-i18n="app.tagline"></span>
         </span>
       </a>
 
-      <nav class="nav" aria-label="Secciones">
-        <p class="nav__label">Operación</p>
+      <nav class="nav" data-i18n-attr="aria-label:nav.label">
+        <p class="nav__label" data-i18n="nav.section"></p>
         ${raw(
           NAV.map(
             (item) => html`
               <a class="nav__item" href="#${item.path}" data-nav="${item.path}">
-                ${raw(icon(item.icon, { size: 18 }))} ${item.label}
+                ${raw(icon(item.icon, { size: 18 }))} <span data-i18n="${item.labelKey}"></span>
               </a>
             `
           ).join("")
@@ -100,17 +111,16 @@ const shell = () => html`
         <button class="btn btn--ghost btn--block" type="button" data-action="palette"
                 style="justify-content:space-between">
           <span style="display:inline-flex;align-items:center;gap:var(--space-2)">
-            ${raw(icon("search", { size: 15 }))} Buscar acción
+            ${raw(icon("search", { size: 15 }))} <span data-i18n="shell.search"></span>
           </span>
           <span class="kbd">Ctrl K</span>
         </button>
 
-        <div class="sidebar__status" data-health>
-          <span class="pulse-dot"></span> API operativa
-        </div>
+        <div class="sidebar__status" data-health></div>
 
         <p class="sidebar__credit">
-          Desarrollado por <a href="https://www.naindev.com/" target="_blank" rel="noopener">Aitor Nain</a>
+          <span data-i18n="shell.credit"></span>
+          <a href="https://www.naindev.com/" target="_blank" rel="noopener">Aitor Nain</a>
         </p>
       </div>
     </aside>
@@ -118,19 +128,20 @@ const shell = () => html`
     <div class="main">
       <header class="topbar">
         <button class="btn btn--ghost btn--icon topbar__menu" type="button" data-action="toggle-nav"
-                aria-label="Abrir navegación">${raw(icon("menu", { size: 18 }))}</button>
+                data-i18n-attr="aria-label:shell.menu">${raw(icon("menu", { size: 18 }))}</button>
 
         <div class="topbar__titles">
-          <p class="topbar__title" data-topbar-title>Panel de control</p>
+          <p class="topbar__title" data-topbar-title></p>
           <p class="topbar__subtitle" data-topbar-subtitle></p>
         </div>
 
         <div class="topbar__actions">
           <button class="btn btn--sm" type="button" data-active-order hidden></button>
+          ${raw(languageSwitch())}
           <button class="btn btn--ghost btn--icon" type="button" data-action="palette"
-                  aria-label="Abrir paleta de comandos">${raw(icon("command", { size: 16 }))}</button>
+                  data-i18n-attr="aria-label:shell.palette">${raw(icon("command", { size: 16 }))}</button>
           <button class="btn btn--ghost btn--icon" type="button" data-action="theme"
-                  aria-label="Cambiar tema"></button>
+                  data-i18n-attr="aria-label:shell.theme"></button>
         </div>
       </header>
 
@@ -142,7 +153,7 @@ const shell = () => html`
 `;
 
 /* --------------------------------------------------------------------------
-   Indicador del pedido activo
+   Active-order indicator
    -------------------------------------------------------------------------- */
 const renderActiveOrder = () => {
   const button = $("[data-active-order]");
@@ -159,61 +170,61 @@ const renderActiveOrder = () => {
     <span class="mono">${activeOrder.reference}</span>
     <span class="numeric">${fmtMoney(activeOrder.totalAmount)}</span>
   `;
-  button.setAttribute("aria-label", `Abrir pedido activo ${activeOrder.reference}`);
+  button.setAttribute("aria-label", t("shell.activeOrder", { reference: activeOrder.reference }));
 };
 
 /* --------------------------------------------------------------------------
-   Paleta de comandos
+   Command palette
    -------------------------------------------------------------------------- */
 const commands = () => [
   ...NAV.map((item) => ({
-    label: `Ir a ${item.label}`,
+    label: t("palette.goto", { name: t(item.labelKey) }),
     icon: item.icon,
     hint: item.path,
     run: () => navigate(item.path)
   })),
   {
-    label: "Ejecutar escenario guiado",
+    label: t("palette.scenario"),
     icon: "play",
-    hint: "Flujo completo de compra",
+    hint: t("palette.scenario.hint"),
     run: async () => {
       navigate("/panel");
-      toast({ title: "Ejecutando escenario…", text: "Se está recorriendo el flujo completo.", variant: "info" });
+      toast({ title: t("palette.scenario.running"), text: t("palette.scenario.runningText"), variant: "info" });
       try {
         await api.demo.simulate();
         window.dispatchEvent(new HashChangeEvent("hashchange"));
       } catch {
-        toast({ title: "El escenario falló", variant: "error" });
+        toast({ title: t("palette.scenario.failed"), variant: "error" });
       }
     }
   },
   {
-    label: "Reiniciar datos de la demo",
+    label: t("palette.reset"),
     icon: "refresh",
-    hint: "Restaura el catálogo y pedidos iniciales",
+    hint: t("palette.reset.hint"),
     run: () => {
       resetDemoDatabase();
-      toast({ title: "Datos reiniciados", text: "Catálogo y pedidos restaurados al estado inicial.", variant: "info" });
+      toast({ title: t("palette.reset.done"), text: t("palette.reset.doneText"), variant: "info" });
       setTimeout(() => window.location.reload(), 450);
     }
   },
   {
-    label: isDemoMode() ? "Ver código en GitHub" : "Abrir documentación Swagger",
+    label: isDemoMode() ? t("palette.docs.code") : t("palette.docs.swagger"),
     icon: "book",
-    hint: isDemoMode() ? "Repositorio C#" : "/swagger",
+    hint: isDemoMode() ? t("palette.docs.codeHint") : "/swagger",
     run: () => window.open(isDemoMode() ? "https://github.com/Nain9Dev/NainOrder" : "/swagger", "_blank", "noopener")
   },
   {
-    label: "Cambiar tema",
+    label: t("palette.theme"),
     icon: "sun",
-    hint: "Claro / oscuro",
+    hint: t("palette.theme.hint"),
     run: () => toggleTheme()
   },
   ...(getState().activeOrder
     ? [{
-        label: `Abrir pedido activo ${getState().activeOrder.reference}`,
+        label: t("palette.activeOrder", { reference: getState().activeOrder.reference }),
         icon: "cart",
-        hint: "Detalle y transiciones",
+        hint: t("palette.activeOrder.hint"),
         run: () => openOrderPanel(getState().activeOrderId)
       }]
     : [])
@@ -230,9 +241,9 @@ const openPalette = () => {
   const overlay = document.createElement("div");
   overlay.className = "overlay overlay--palette";
   overlay.innerHTML = html`
-    <div class="palette" role="dialog" aria-modal="true" aria-label="Paleta de comandos">
-      <input class="palette__input" type="text" placeholder="Escribe una acción…"
-             aria-label="Buscar acción" autocomplete="off">
+    <div class="palette" role="dialog" aria-modal="true" aria-label="${t("palette.label")}">
+      <input class="palette__input" type="text" placeholder="${t("palette.placeholder")}"
+             aria-label="${t("shell.search")}" autocomplete="off">
       <div class="palette__list" role="listbox"></div>
     </div>
   `;
@@ -255,7 +266,7 @@ const openPalette = () => {
             `
           )
           .join("")
-      : html`<p class="palette__item" style="color:var(--text-muted)">Sin coincidencias</p>`;
+      : html`<p class="palette__item" style="color:var(--text-muted)">${t("palette.empty")}</p>`;
   };
 
   const close = () => {
@@ -316,25 +327,31 @@ const toggleTheme = () => {
 };
 
 /* --------------------------------------------------------------------------
-   Salud del servicio
+   Service health
    -------------------------------------------------------------------------- */
-const monitorHealth = () => {
+let health = "ok";
+const paintHealth = () => {
   const node = $("[data-health]");
+  if (!node) return;
+
+  const key = { ok: "shell.health.ok", down: "shell.health.down", browser: "shell.health.browser" }[health];
+  node.innerHTML = html`<span class="pulse-dot ${health === "down" ? "pulse-dot--down" : ""}"></span> ${t(key)}`;
+};
+
+const monitorHealth = () => {
   const banner = $("[data-demo-banner]");
 
-  // El modo demostración también se activa a posteriori, cuando una petición falla
-  // y el cliente conmuta al motor del navegador. El aviso se reevalúa en cada
-  // comprobación para que no dependa de lo que se supiera al primer pintado.
+  // Demo mode can also kick in later, when a request fails and the client falls back to the
+  // browser engine. The notice is re-evaluated on every check so it never depends on what was
+  // known at first paint.
   const syncBanner = () => { banner.hidden = !isDemoMode(); };
 
   const check = async () => {
     syncBanner();
 
     if (isDemoMode()) {
-      node.dataset.painted = "true";
-      node.innerHTML = html`
-        <span class="pulse-dot"></span> Motor de dominio en el navegador
-      `;
+      health = "browser";
+      paintHealth();
       setState({ apiHealthy: true });
       return;
     }
@@ -347,40 +364,45 @@ const monitorHealth = () => {
       healthy = false;
     }
 
-    if (healthy === getState().apiHealthy && node.dataset.painted) return;
-
+    health = healthy ? "ok" : "down";
+    paintHealth();
     setState({ apiHealthy: healthy });
-    node.dataset.painted = "true";
-    node.innerHTML = html`
-      <span class="pulse-dot ${healthy ? "" : "pulse-dot--down"}"></span>
-      ${healthy ? "API operativa" : "API no disponible"}
-    `;
   };
 
   check();
-  // La conmutación al motor del navegador ocurre dentro de una petición, así que el
-  // aviso se reevalúa con cada traza en lugar de esperar al siguiente sondeo.
+  // The switch to the browser engine happens inside a request, so the notice is re-evaluated
+  // on every trace instead of waiting for the next poll.
   onTrace(syncBanner);
-  // Un sondeo espaciado basta para un panel: no conviene añadir ruido a la traza.
+  // A sparse poll is enough for a panel: no point adding noise to the trace.
   setInterval(check, 30_000);
 };
 
 /* --------------------------------------------------------------------------
-   Arranque
+   Start-up
    -------------------------------------------------------------------------- */
 const boot = async () => {
+  await loadI18n();
+
   document.body.innerHTML = shell();
   applyTheme(getState().theme);
+  applyStatic(document);
 
   const outlet = $("#main-content");
   const app = $(".app");
+  let currentView = null;
 
   NAV.forEach((item) => defineRoute(item.path, item.view));
 
+  const paintTitles = () => {
+    if (!currentView) return;
+    $("[data-topbar-title]").textContent = currentView.title;
+    $("[data-topbar-subtitle]").textContent = currentView.subtitle ?? "";
+    document.title = `${currentView.title} · NainOrder`;
+  };
+
   onRouteChange((path, view) => {
-    $("[data-topbar-title]").textContent = view.title;
-    $("[data-topbar-subtitle]").textContent = view.subtitle ?? "";
-    document.title = `${view.title} · NainOrder`;
+    currentView = view;
+    paintTitles();
 
     document.querySelectorAll("[data-nav]").forEach((link) => {
       if (link.dataset.nav === path) link.setAttribute("aria-current", "page");
@@ -392,6 +414,7 @@ const boot = async () => {
 
   delegate(document.body, "click", '[data-action="theme"]', toggleTheme);
   delegate(document.body, "click", '[data-action="palette"]', openPalette);
+  delegate(document.body, "click", '[data-lang]', (event, button) => setLocale(button.dataset.lang));
   delegate(document.body, "click", '[data-action="toggle-nav"]', () => {
     app.dataset.navOpen = app.dataset.navOpen === "true" ? "false" : "true";
   });
@@ -417,15 +440,28 @@ const boot = async () => {
 
   const rerender = startRouter(outlet);
 
-  // Los clientes se cargan una vez: el catálogo los necesita para abrir un pedido.
+  // A language switch repaints the shell's static text and re-renders the current view.
+  window.addEventListener("nain:locale", () => {
+    document.querySelectorAll("[data-lang]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.lang === getLocale()));
+    });
+    applyStatic(document);
+    applyTheme(document.documentElement.dataset.theme);
+    paintTitles();
+    paintHealth();
+    renderActiveOrder();
+    rerender();
+  });
+
+  // Customers load once: the catalogue needs them to open an order.
   try {
     setState({ customers: await api.customers.list() });
   } catch {
-    // Sin clientes la interfaz sigue siendo navegable; el aviso llega al intentar operar.
+    // Without customers the interface stays navigable; the warning arrives when trying to operate.
   }
 
-  // El pedido activo guardado puede haber desaparecido —base efímera reiniciada— o
-  // haberse cobrado; en ambos casos deja de servir como cesta de trabajo.
+  // The saved active order may have disappeared (ephemeral database reset) or been paid; in
+  // both cases it no longer works as a working basket.
   const { activeOrderId } = getState();
   if (activeOrderId) {
     try {
@@ -440,5 +476,5 @@ const boot = async () => {
 
 boot();
 
-// Superficie mínima para navegar por consola o desde un enlace profundo externo.
+// Minimal surface to navigate from the console or from an external deep link.
 window.NainOrder = { navigate, currentPath, isDemoMode, resetDemoDatabase };

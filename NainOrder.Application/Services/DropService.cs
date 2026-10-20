@@ -112,7 +112,8 @@ public sealed class DropService : IDropService
         return new DropDto(
             drop.Id, drop.ProductId, drop.ProductName, drop.ProductSku, drop.UnitPrice,
             drop.TotalUnits, drop.AvailableAt(now), drop.HeldAt(now), drop.SoldUnits,
-            drop.StatusAt(now).ToString(), drop.OpensAt, drop.PerBuyerLimit, drop.HoldSeconds, now, mine);
+            drop.StatusAt(now).ToString(), drop.OpensAt, drop.PerBuyerLimit, drop.HoldSeconds, now,
+            drop.NextHoldExpiryAt(now), mine);
     }
 
     private static HoldDto MapHold(Hold hold) =>

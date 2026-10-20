@@ -9,6 +9,8 @@
  * - Persistencia local en localStorage con opción de reinicio.
  */
 
+import { t } from "./i18n.js";
+
 const STORAGE_KEY = "nainorder.demo_db";
 
 const DEFAULT_CUSTOMERS = [
@@ -263,6 +265,12 @@ const mapDrop = (drop, token) => {
     perBuyerLimit: drop.perBuyerLimit,
     holdSeconds: drop.holdSeconds,
     serverTime: new Date(now).toISOString(),
+    nextHoldExpiresAt: (() => {
+      const live = drop.holds
+        .filter((h) => h.state === "Active" && Date.parse(h.expiresAt) > now)
+        .map((h) => Date.parse(h.expiresAt));
+      return live.length ? new Date(Math.min(...live)).toISOString() : null;
+    })(),
     myHolds: token
       ? drop.holds.filter((h) => h.buyerToken === token).map(({ buyerToken, ...hold }) => ({
           ...hold,
@@ -281,12 +289,12 @@ const dispatchDrops = (method, pathname, { body, headers }) => {
 
   if (method === "POST" && pathname === "/drops") {
     const product = mockDb.products.find((p) => p.id === body?.productId);
-    if (!product) throw dropError(404, "not_found", "Resource not found", "Producto no encontrado.");
+    if (!product) throw dropError(404, "not_found", "Resource not found", t("mock.drop.productNotFound"));
 
     const { totalUnits, perBuyerLimit, holdSeconds } = body;
     if (!(totalUnits >= 1 && totalUnits <= 1000 && perBuyerLimit >= 1 && perBuyerLimit <= totalUnits &&
           holdSeconds >= 5 && holdSeconds <= 3600)) {
-      throw dropError(400, "invalid_data", "Invalid request data", "Configuración de drop no válida.");
+      throw dropError(400, "invalid_data", "Invalid request data", t("mock.drop.invalid"));
     }
 
     const drop = {
@@ -309,18 +317,18 @@ const dispatchDrops = (method, pathname, { body, headers }) => {
   if (!match) return undefined;
 
   const drop = mockDrops.get(match[1]);
-  if (!drop) throw dropError(404, "not_found", "Resource not found", `Drop ${match[1]} no existe.`);
+  if (!drop) throw dropError(404, "not_found", "Resource not found", t("mock.drop.notExist", { id: match[1] }));
 
   if (method === "GET" && pathname === `/drops/${drop.id}`) return mapDrop(drop, token);
 
-  if (!token) throw dropError(400, "buyer_token_required", "Buyer token required", "Falta el identificador de visitante.");
+  if (!token) throw dropError(400, "buyer_token_required", "Buyer token required", t("mock.drop.noVisitor"));
   const now = dropNow();
 
   if (method === "POST" && pathname === `/drops/${drop.id}/holds`) {
     const quantity = Number(body?.quantity);
-    if (!(quantity >= 1)) throw dropError(400, "invalid_data", "Invalid request data", "Cantidad no válida.");
+    if (!(quantity >= 1)) throw dropError(400, "invalid_data", "Invalid request data", t("mock.drop.badQuantity"));
     if (now < Date.parse(drop.opensAt)) {
-      throw dropError(409, "drop_not_live", "Drop is not live", "El drop aún no ha abierto.");
+      throw dropError(409, "drop_not_live", "Drop is not live", t("mock.drop.notLive"));
     }
 
     const owned = drop.holds
@@ -328,12 +336,12 @@ const dispatchDrops = (method, pathname, { body, headers }) => {
         (h.state === "Confirmed" || (h.state === "Active" && Date.parse(h.expiresAt) > now)))
       .reduce((s, h) => s + h.quantity, 0);
     if (owned + quantity > drop.perBuyerLimit) {
-      throw dropError(409, "buyer_limit_reached", "Buyer limit reached", `Límite de ${drop.perBuyerLimit} por comprador.`);
+      throw dropError(409, "buyer_limit_reached", "Buyer limit reached", t("mock.drop.limit", { count: drop.perBuyerLimit }));
     }
 
     const { available } = dropCounts(drop, now);
     if (quantity > available) {
-      throw dropError(409, "insufficient_stock", "Insufficient stock", `Solo quedan ${available} unidades.`);
+      throw dropError(409, "insufficient_stock", "Insufficient stock", t("mock.drop.onlyLeft", { count: available }));
     }
 
     const hold = {
@@ -353,10 +361,10 @@ const dispatchDrops = (method, pathname, { body, headers }) => {
   const holdId = match[2];
   if (method === "POST" && holdId) {
     const hold = drop.holds.find((h) => h.id === holdId && h.buyerToken === token);
-    if (!hold) throw dropError(404, "hold_not_found", "Hold not found", "Reserva no encontrada.");
-    if (hold.state === "Confirmed") throw dropError(409, "hold_not_active", "Hold not active", "La reserva ya está confirmada.");
+    if (!hold) throw dropError(404, "hold_not_found", "Hold not found", t("mock.drop.holdNotFound"));
+    if (hold.state === "Confirmed") throw dropError(409, "hold_not_active", "Hold not active", t("mock.drop.holdConfirmed"));
     if (hold.state === "Expired" || Date.parse(hold.expiresAt) <= now) {
-      throw dropError(409, "hold_expired", "Hold expired", "La reserva ha caducado.");
+      throw dropError(409, "hold_expired", "Hold expired", t("mock.drop.holdExpired"));
     }
 
     const customer = mockDb.customers[0];
@@ -433,12 +441,12 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
   if (method === "POST" && matchProductStock) {
     const id = matchProductStock[1];
     const product = mockDb.products.find((p) => p.id === id);
-    if (!product) throw { status: 404, title: "Producto no encontrado", detail: `El producto ${id} no existe.` };
+    if (!product) throw { status: 404, title: t("mock.notFound.product"), detail: t("mock.notFound.productDetail", { id }) };
 
     const delta = Number(body?.delta || 0);
     const newStock = product.stockQuantity + delta;
     if (newStock < 0) {
-      throw { status: 409, title: "Stock insuficiente", detail: `El stock resultante (${newStock}) no puede ser negativo.` };
+      throw { status: 409, title: t("mock.insufficient.title"), detail: t("mock.insufficient.negative", { stock: newStock }) };
     }
 
     product.stockQuantity = newStock;
@@ -451,7 +459,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
   if (matchProductDetail) {
     const id = matchProductDetail[1];
     const product = mockDb.products.find((p) => p.id === id);
-    if (!product) throw { status: 404, title: "Producto no encontrado", detail: `El producto ${id} no existe.` };
+    if (!product) throw { status: 404, title: t("mock.notFound.product"), detail: t("mock.notFound.productDetail", { id }) };
 
     if (method === "GET") return { ...product };
 
@@ -467,10 +475,10 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
 
   if (method === "POST" && pathname === "/products") {
     if (!body?.sku || !body?.name) {
-      throw { status: 400, title: "Validación fallida", detail: "SKU y Nombre son campos requeridos." };
+      throw { status: 400, title: t("mock.validation.title"), detail: t("mock.validation.skuName") };
     }
     if (mockDb.products.some((p) => p.sku.toLowerCase() === body.sku.trim().toLowerCase())) {
-      throw { status: 409, title: "SKU duplicado", detail: `El SKU ${body.sku} ya existe en el catálogo.` };
+      throw { status: 409, title: t("mock.duplicateSku.title"), detail: t("mock.duplicateSku.detail", { sku: body.sku }) };
     }
 
     const newProduct = {
@@ -533,14 +541,14 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
     const orderId = matchOrderItem[1];
     const productId = matchOrderItem[2];
     const order = mockDb.orders.find((o) => o.id === orderId);
-    if (!order) throw { status: 404, title: "Pedido no encontrado", detail: `Pedido ${orderId} no existe.` };
+    if (!order) throw { status: 404, title: t("mock.notFound.order"), detail: t("mock.notFound.orderDetail", { id: orderId }) };
 
     if (order.status !== "PendingPayment") {
-      throw { status: 409, title: "Pedido bloqueado", detail: "Solo los pedidos pendientes de cobro pueden modificarse." };
+      throw { status: 409, title: t("mock.locked.title"), detail: t("mock.locked.detail") };
     }
 
     const itemIndex = order.items.findIndex((it) => it.productId === productId);
-    if (itemIndex === -1) throw { status: 404, title: "Línea no encontrada", detail: `Producto no está en el pedido.` };
+    if (itemIndex === -1) throw { status: 404, title: t("mock.notFound.line"), detail: t("mock.notFound.lineDetail") };
 
     const product = mockDb.products.find((p) => p.id === productId);
 
@@ -548,7 +556,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
       const newQty = Number(body?.quantity || 1);
       const diff = newQty - order.items[itemIndex].quantity;
       if (diff > 0 && product && product.stockQuantity < diff) {
-        throw { status: 409, title: "Stock insuficiente", detail: `No hay suficiente stock para añadir ${diff} unidades más.` };
+        throw { status: 409, title: t("mock.insufficient.title"), detail: t("mock.insufficient.add", { count: diff }) };
       }
       if (product) {
         product.stockQuantity -= diff;
@@ -576,19 +584,19 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
   if (method === "POST" && matchOrderAdd) {
     const orderId = matchOrderAdd[1];
     const order = mockDb.orders.find((o) => o.id === orderId);
-    if (!order) throw { status: 404, title: "Pedido no encontrado", detail: `Pedido ${orderId} no existe.` };
+    if (!order) throw { status: 404, title: t("mock.notFound.order"), detail: t("mock.notFound.orderDetail", { id: orderId }) };
 
     if (order.status !== "PendingPayment") {
-      throw { status: 409, title: "Pedido bloqueado", detail: "Solo los pedidos pendientes de cobro pueden modificarse." };
+      throw { status: 409, title: t("mock.locked.title"), detail: t("mock.locked.detail") };
     }
 
     const productId = body?.productId;
     const qty = Number(body?.quantity || 1);
     const product = mockDb.products.find((p) => p.id === productId);
-    if (!product) throw { status: 404, title: "Producto no encontrado", detail: `El producto ${productId} no existe.` };
+    if (!product) throw { status: 404, title: t("mock.notFound.product"), detail: t("mock.notFound.productDetail", { id: productId }) };
 
     if (product.stockQuantity < qty) {
-      throw { status: 409, title: "Stock insuficiente", detail: `Solo quedan ${product.stockQuantity} unidades de ${product.name}.` };
+      throw { status: 409, title: t("mock.insufficient.title"), detail: t("mock.insufficient.left", { count: product.stockQuantity, name: product.name }) };
     }
 
     // Descuenta stock y congela precio
@@ -620,7 +628,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
     const orderId = matchOrderTransition[1];
     const action = matchOrderTransition[2];
     const order = mockDb.orders.find((o) => o.id === orderId);
-    if (!order) throw { status: 404, title: "Pedido no encontrado", detail: `Pedido ${orderId} no existe.` };
+    if (!order) throw { status: 404, title: t("mock.notFound.order"), detail: t("mock.notFound.orderDetail", { id: orderId }) };
 
     const targetStatus = {
       pay: "Paid",
@@ -633,8 +641,8 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
     if (!allowed.includes(targetStatus)) {
       throw {
         status: 409,
-        title: "Transición inválida",
-        detail: `No se puede pasar el pedido de ${order.status} a ${targetStatus}.`
+        title: t("mock.transition.title"),
+        detail: t("mock.transition.detail", { from: order.status, to: targetStatus })
       };
     }
 
@@ -663,7 +671,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
   if (method === "GET" && matchOrderDetail) {
     const id = matchOrderDetail[1];
     const order = mockDb.orders.find((o) => o.id === id);
-    if (!order) throw { status: 404, title: "Pedido no encontrado", detail: `Pedido ${id} no existe.` };
+    if (!order) throw { status: 404, title: t("mock.notFound.order"), detail: t("mock.notFound.orderDetail", { id }) };
     return mockDb.mapOrderDto(order);
   }
 
@@ -671,7 +679,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
   if (method === "POST" && pathname === "/orders") {
     const customerId = body?.customerId;
     const customer = mockDb.customers.find((c) => c.id === customerId);
-    if (!customer) throw { status: 404, title: "Cliente no encontrado", detail: "Debes seleccionar un cliente válido." };
+    if (!customer) throw { status: 404, title: t("mock.notFound.customer"), detail: t("mock.notFound.customerDetail") };
 
     const newOrder = {
       id: mockDb.generateId(),
@@ -700,7 +708,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
 
   if (method === "POST" && pathname === "/customers") {
     if (!body?.name || !body?.email) {
-      throw { status: 400, title: "Validación", detail: "Nombre y correo son requeridos." };
+      throw { status: 400, title: t("mock.validation.short"), detail: t("mock.validation.nameEmail") };
     }
     const customer = {
       id: mockDb.generateId(),
@@ -842,7 +850,7 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
     };
 
     const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const product = await track(1, "Products.Create", "Domain valida SKU, precio y stock inicial", async () => {
+    const product = await track(1, "Products.Create", t("mock.sim.step1"), async () => {
       return mockDispatch("POST", "/products", {
         body: {
           sku: `NO-DEMO-${suffix}`,
@@ -855,34 +863,34 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
       });
     });
 
-    const order = await track(2, "Orders.Create", "Order nace en PendingPayment con referencia legible", async () => {
+    const order = await track(2, "Orders.Create", t("mock.sim.step2"), async () => {
       return mockDispatch("POST", "/orders", {
         body: { customerId: DEFAULT_CUSTOMERS[0].id }
       });
     });
 
-    const withItem = await track(3, "Orders.AddItem", "El agregado congela el precio y Product descuenta stock", async () => {
+    const withItem = await track(3, "Orders.AddItem", t("mock.sim.step3"), async () => {
       return mockDispatch("POST", `/orders/${order.id}/items`, {
         body: { productId: product.id, quantity: 2 }
       });
     });
 
-    const paid = await track(4, "Orders.Pay", "Transición PendingPayment -> Paid validada por el dominio", async () => {
+    const paid = await track(4, "Orders.Pay", t("mock.sim.step4"), async () => {
       return mockDispatch("POST", `/orders/${order.id}/pay`);
     });
 
-    const processed = await track(5, "Orders.Process", "Transición Paid -> Processing", async () => {
+    const processed = await track(5, "Orders.Process", t("mock.sim.step5"), async () => {
       return mockDispatch("POST", `/orders/${order.id}/process`);
     });
 
-    const shipped = await track(6, "Orders.Ship", "Transición Processing -> Shipped, estado final", async () => {
+    const shipped = await track(6, "Orders.Ship", t("mock.sim.step6"), async () => {
       return mockDispatch("POST", `/orders/${order.id}/ship`);
     });
 
     const refreshedProduct = mockDb.products.find((p) => p.id === product.id);
 
     return {
-      message: "Flujo completo ejecutado sobre el motor de dominio en memoria, respetando las mismas invariantes de Clean Architecture.",
+      message: t("mock.sim.message"),
       elapsedMilliseconds: Math.round(performance.now() - started),
       steps,
       finalOrder: shipped,
@@ -921,5 +929,5 @@ export async function mockDispatch(method, path, { body, query, headers } = {}) 
     };
   }
 
-  throw { status: 404, title: "No encontrado", detail: `Ruta ${method} ${pathname} no implementada.` };
+  throw { status: 404, title: t("mock.notFound.route"), detail: t("mock.notFound.routeDetail", { method, path: pathname }) };
 }

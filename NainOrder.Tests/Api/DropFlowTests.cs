@@ -105,6 +105,22 @@ public class DropFlowTests : IClassFixture<NainOrderApiFactory>
     }
 
     [Fact]
+    public async Task A_drop_reports_when_its_next_hold_expires()
+    {
+        var drop = await CreateDropAsync(units: 3, holdSeconds: 30);
+        Assert.Null(drop.NextHoldExpiresAt);
+
+        await TakeAsync(drop.Id, "buyer-next");
+        var after = await GetAsync(drop.Id);
+
+        Assert.NotNull(after.NextHoldExpiresAt);
+        Assert.InRange((after.NextHoldExpiresAt!.Value - after.ServerTime).TotalSeconds, 25, 31);
+
+        _clock.Advance(TimeSpan.FromSeconds(31));
+        Assert.Null((await GetAsync(drop.Id)).NextHoldExpiresAt);
+    }
+
+    [Fact]
     public async Task A_scheduled_drop_rejects_takes_until_it_opens()
     {
         var drop = await CreateDropAsync(units: 5, opensInSeconds: 120);

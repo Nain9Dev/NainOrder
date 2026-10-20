@@ -6,6 +6,7 @@ import { openModal, withBusy } from "../overlay.js";
 import { toastError, toastSuccess, toast } from "../toast.js";
 import { addProductToActiveOrder, openOrderPanel } from "../order-panel.js";
 import { getState } from "../state.js";
+import { t } from "../i18n.js";
 import { fmtMoney, fmtNumber, stockLabel } from "../format.js";
 
 const filters = { search: "", category: "" };
@@ -23,7 +24,7 @@ const productCard = (product, index) => html`
       <span class="badge" data-stock="${product.stockStatus}">${fmtNumber(product.stockQuantity)}</span>
     </div>
 
-    <p class="product__desc">${product.description || "Sin descripción."}</p>
+    <p class="product__desc">${product.description || t("catalog.noDescription")}</p>
 
     <div class="row" style="gap:var(--space-2)">
       <span class="tag">${product.category}</span>
@@ -34,12 +35,12 @@ const productCard = (product, index) => html`
       <span class="product__price">${fmtMoney(product.price)}</span>
       <div class="product__actions">
         <button class="btn btn--ghost btn--icon btn--sm" type="button" data-edit
-                aria-label="Editar ${product.name}">${raw(icon("cog", { size: 14 }))}</button>
+                aria-label="${t("catalog.edit", { name: product.name })}">${raw(icon("cog", { size: 14 }))}</button>
         <button class="btn btn--ghost btn--icon btn--sm" type="button" data-restock
-                aria-label="Reponer stock de ${product.name}">${raw(icon("plus", { size: 14 }))}</button>
+                aria-label="${t("catalog.restock", { name: product.name })}">${raw(icon("plus", { size: 14 }))}</button>
         <button class="btn btn--sm" type="button" data-add
                 ${product.stockQuantity < 1 ? "disabled" : ""}>
-          ${raw(icon("cart", { size: 14 }))} Añadir
+          ${raw(icon("cart", { size: 14 }))} ${t("catalog.add")}
         </button>
       </div>
     </div>
@@ -49,29 +50,28 @@ const productCard = (product, index) => html`
 const markup = (products, categories) => html`
   <section class="section-head">
     <div>
-      <h1 class="section-head__title">Catálogo</h1>
+      <h1 class="section-head__title">${t("catalog.title")}</h1>
       <p class="section-head__text">
-        El stock lo gobierna la entidad <code class="mono">Product</code>: ninguna capa superior
-        puede dejarlo en negativo, ni siquiera saltándose el servicio.
+        ${raw(t("catalog.intro", { entity: '<code class="mono">Product</code>' }))}
       </p>
     </div>
     <button class="btn btn--primary" type="button" data-action="create">
-      ${raw(icon("plus", { size: 15 }))} Nuevo producto
+      ${raw(icon("plus", { size: 15 }))} ${t("catalog.new")}
     </button>
   </section>
 
   <div class="card" style="padding:var(--space-4)">
     <div class="row">
       <label class="search">
-        <span class="visually-hidden">Buscar en el catálogo</span>
+        <span class="visually-hidden">${t("catalog.searchLabel")}</span>
         ${raw(icon("search", { size: 16 }))}
-        <input class="input" type="search" name="search" placeholder="Buscar por nombre o SKU…"
+        <input class="input" type="search" name="search" placeholder="${t("catalog.searchPlaceholder")}"
                value="${filters.search}" data-filter="search" autocomplete="off">
       </label>
 
       <div class="row" style="gap:var(--space-2)">
         <button class="chip" type="button" data-category=""
-                aria-pressed="${filters.category === ""}">Todas</button>
+                aria-pressed="${filters.category === ""}">${t("catalog.all")}</button>
         ${raw(
           categories
             .map(
@@ -85,7 +85,7 @@ const markup = (products, categories) => html`
       </div>
 
       <span class="spacer"></span>
-      <span class="tag">${fmtNumber(products.length)} referencias</span>
+      <span class="tag">${t("catalog.count", { count: fmtNumber(products.length) })}</span>
     </div>
   </div>
 
@@ -96,9 +96,9 @@ const markup = (products, categories) => html`
         </div>`
       : html`<div class="empty">
           <span class="empty__icon">${raw(icon("catalog", { size: 22 }))}</span>
-          <p class="empty__title">Sin resultados</p>
-          <p class="empty__text">Ningún producto coincide con el filtro aplicado.</p>
-          <button class="btn" type="button" data-action="clear-filters">Quitar filtros</button>
+          <p class="empty__title">${t("catalog.empty.title")}</p>
+          <p class="empty__text">${t("catalog.empty.text")}</p>
+          <button class="btn" type="button" data-action="clear-filters">${t("catalog.empty.clear")}</button>
         </div>`
   )}
 `;
@@ -112,19 +112,19 @@ const productForm = (product) => html`
             <span class="field__label">SKU</span>
             <input class="input mono" name="sku" required minlength="2" maxlength="50"
                    placeholder="NO-CAT-001" data-autofocus autocomplete="off">
-            <span class="field__hint">Identificador único. Se normaliza a mayúsculas.</span>
+            <span class="field__hint">${t("catalog.form.skuHint")}</span>
           </label>`
     )}
 
     <label class="field">
-      <span class="field__label">Nombre</span>
+      <span class="field__label">${t("catalog.form.name")}</span>
       <input class="input" name="name" required minlength="2" maxlength="200"
              value="${product?.name ?? ""}" ${product ? "data-autofocus" : ""} autocomplete="off">
     </label>
 
     <div class="row" style="gap:var(--space-3);align-items:flex-start">
       <label class="field" style="flex:1">
-        <span class="field__label">Precio (€)</span>
+        <span class="field__label">${t("catalog.form.price")}</span>
         <input class="input numeric" name="price" type="number" min="0" max="1000000" step="0.01"
                required value="${product?.price ?? ""}">
       </label>
@@ -133,23 +133,23 @@ const productForm = (product) => html`
         product
           ? ""
           : html`<label class="field" style="flex:1">
-              <span class="field__label">Stock inicial</span>
+              <span class="field__label">${t("catalog.form.initialStock")}</span>
               <input class="input numeric" name="initialStock" type="number" min="0" max="1000000"
                      step="1" required value="0">
             </label>`
       )}
 
       <label class="field" style="flex:1">
-        <span class="field__label">Categoría</span>
+        <span class="field__label">${t("catalog.form.category")}</span>
         <input class="input" name="category" maxlength="60" list="category-options"
-               value="${product?.category ?? ""}" placeholder="General" autocomplete="off">
+               value="${product?.category ?? ""}" placeholder="${t("catalog.form.categoryPlaceholder")}" autocomplete="off">
       </label>
     </div>
 
     <label class="field">
-      <span class="field__label">Descripción</span>
+      <span class="field__label">${t("catalog.form.description")}</span>
       <textarea class="textarea" name="description" maxlength="500"
-                placeholder="Detalle visible en el catálogo">${product?.description ?? ""}</textarea>
+                placeholder="${t("catalog.form.descriptionPlaceholder")}">${product?.description ?? ""}</textarea>
     </label>
 
     <p class="field__error" data-form-error hidden></p>
@@ -169,8 +169,8 @@ const openProductModal = ({ product, categories, onSaved }) => {
   const isEdit = Boolean(product);
 
   openModal({
-    title: isEdit ? "Editar producto" : "Nuevo producto",
-    subtitle: isEdit ? product.sku : "Alta en el catálogo",
+    title: isEdit ? t("catalog.modal.editTitle") : t("catalog.new"),
+    subtitle: isEdit ? product.sku : t("catalog.modal.createSubtitle"),
     body: html`
       ${raw(productForm(product))}
       <datalist id="category-options">
@@ -178,10 +178,10 @@ const openProductModal = ({ product, categories, onSaved }) => {
       </datalist>
     `,
     footer: html`
-      <button class="btn" type="button" data-overlay-close>Cancelar</button>
+      <button class="btn" type="button" data-overlay-close>${t("overlay.cancel")}</button>
       <span class="spacer"></span>
       <button class="btn btn--primary" type="submit" form="product-form">
-        ${isEdit ? "Guardar cambios" : "Crear producto"}
+        ${isEdit ? t("catalog.modal.save") : t("catalog.modal.create")}
       </button>
     `,
     onMount: ({ panel, close }) => {
@@ -200,7 +200,7 @@ const openProductModal = ({ product, categories, onSaved }) => {
           const saved = await withBusy(submit, () =>
             isEdit ? api.products.update(product.id, payload) : api.products.create(payload));
 
-          toastSuccess(isEdit ? "Producto actualizado" : "Producto creado", saved.sku);
+          toastSuccess(isEdit ? t("catalog.toast.updated") : t("catalog.toast.created"), saved.sku);
           close();
           onSaved();
         } catch (error) {
@@ -208,7 +208,7 @@ const openProductModal = ({ product, categories, onSaved }) => {
           errorNode.textContent =
             error instanceof ApiError
               ? Object.values(error.validationErrors ?? {}).flat().join(" ") || error.message
-              : "Error inesperado al guardar.";
+              : t("catalog.form.unexpectedSave");
           errorNode.hidden = false;
         }
       });
@@ -218,26 +218,26 @@ const openProductModal = ({ product, categories, onSaved }) => {
 
 const openRestockModal = ({ product, onSaved }) =>
   openModal({
-    title: "Ajustar stock",
-    subtitle: `${product.name} · ${fmtNumber(product.stockQuantity)} unidades actuales`,
+    title: t("catalog.stock.title"),
+    subtitle: t("catalog.stock.subtitle", { name: product.name, count: fmtNumber(product.stockQuantity) }),
     size: 440,
     body: html`
       <form class="stack" id="stock-form" novalidate>
         <label class="field">
-          <span class="field__label">Variación de unidades</span>
+          <span class="field__label">${t("catalog.stock.delta")}</span>
           <input class="input numeric" name="delta" type="number" step="1" value="10" required
                  data-autofocus>
           <span class="field__hint">
-            Un valor negativo retira unidades. El dominio rechaza dejar el stock por debajo de cero.
+            ${t("catalog.stock.hint")}
           </span>
         </label>
         <p class="field__error" data-form-error hidden></p>
       </form>
     `,
     footer: html`
-      <button class="btn" type="button" data-overlay-close>Cancelar</button>
+      <button class="btn" type="button" data-overlay-close>${t("overlay.cancel")}</button>
       <span class="spacer"></span>
-      <button class="btn btn--primary" type="submit" form="stock-form">Aplicar</button>
+      <button class="btn btn--primary" type="submit" form="stock-form">${t("catalog.stock.apply")}</button>
     `,
     onMount: ({ panel, close }) => {
       const form = $("#stock-form", panel);
@@ -250,18 +250,21 @@ const openRestockModal = ({ product, onSaved }) =>
 
         const delta = Number(new FormData(form).get("delta"));
         if (!Number.isFinite(delta) || delta === 0) {
-          errorNode.textContent = "Introduce una variación distinta de cero.";
+          errorNode.textContent = t("catalog.stock.nonZero");
           errorNode.hidden = false;
           return;
         }
 
         try {
           const saved = await withBusy(submit, () => api.products.adjustStock(product.id, delta));
-          toastSuccess("Stock actualizado", `${saved.name}: ${fmtNumber(saved.stockQuantity)} unidades`);
+          toastSuccess(
+            t("catalog.stock.updated"),
+            t("catalog.stock.updatedText", { name: saved.name, count: fmtNumber(saved.stockQuantity) })
+          );
           close();
           onSaved();
         } catch (error) {
-          errorNode.textContent = error instanceof ApiError ? error.message : "Error inesperado.";
+          errorNode.textContent = error instanceof ApiError ? error.message : t("catalog.stock.unexpected");
           errorNode.hidden = false;
         }
       });
@@ -269,8 +272,8 @@ const openRestockModal = ({ product, onSaved }) =>
   });
 
 export const catalogView = {
-  title: "Catálogo",
-  subtitle: "Referencias, precios y stock disponible",
+  get title() { return t("catalog.title"); },
+  get subtitle() { return t("catalog.subtitle"); },
 
   async render(outlet) {
     if (!outlet.firstChild) {
@@ -288,7 +291,7 @@ export const catalogView = {
         api.products.categories()
       ]);
     } catch (error) {
-      toastError(error, "No se pudo cargar el catálogo");
+      toastError(error, t("catalog.loadFailed"));
       return;
     }
 
@@ -334,7 +337,7 @@ export const catalogView = {
         if (!order) return;
 
         toast({
-          title: "Añadido al pedido",
+          title: t("catalog.toast.added"),
           text: `${product.name} · ${order.reference} · ${fmtMoney(order.totalAmount)}`,
           variant: "success"
         });
@@ -344,15 +347,15 @@ export const catalogView = {
         // Duplicar una línea es una regla del dominio, no un fallo: se sugiere la alternativa.
         if (error instanceof ApiError && error.code === "duplicate_order_item") {
           toast({
-            title: "Ya está en el pedido",
-            text: "Ajusta la cantidad desde el detalle del pedido.",
+            title: t("catalog.toast.duplicate"),
+            text: t("catalog.toast.duplicateText"),
             variant: "warning"
           });
           openOrderPanel(getState().activeOrderId, { onChange: reload });
           return;
         }
 
-        toastError(error, "No se pudo añadir al pedido");
+        toastError(error, t("catalog.addFailed"));
         reload();
       }
     });

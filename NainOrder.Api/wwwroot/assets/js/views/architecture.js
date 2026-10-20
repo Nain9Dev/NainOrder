@@ -1,81 +1,51 @@
 /**
- * Vista de arquitectura: explica la estructura del proyecto y, sobre todo, la demuestra.
- * La consola registra en vivo cada petición que hace la interfaz, así que el recorrido
- * por las capas se ve en pantalla en lugar de quedarse en una afirmación del README.
+ * Architecture view: explains the project's structure and, above all, proves it. The console
+ * records every request the interface makes live, so the trip through the layers is seen on
+ * screen instead of staying a claim in the README.
  */
 
 import { html, icon, raw, render, $, delegate } from "../dom.js";
 import { api, onTrace, traceHistory, isDemoMode } from "../api.js";
 import { toastError } from "../toast.js";
 import { fmtDuration, statusLabel } from "../format.js";
+import { t } from "../i18n.js";
 
 const LAYERS = [
   {
     index: "01",
     name: "NainOrder.Domain",
     color: "var(--status-paid)",
-    text: "Entidades, invariantes y máquina de estados. No referencia ningún paquete externo: " +
-          "ni EF Core, ni ASP.NET, ni siquiera inyección de dependencias.",
-    items: ["Order", "OrderItem", "Product", "Customer", "DomainException"],
-    dependsOn: "Sin dependencias"
+    textKey: "arch.layer.domain",
+    items: ["Order", "OrderItem", "Product", "Drop", "Hold", "DomainException"],
+    dependsOn: () => t("arch.dep.none")
   },
   {
     index: "02",
     name: "NainOrder.Application",
     color: "var(--brand-1)",
-    text: "Casos de uso, DTOs y contratos de persistencia. Orquesta agregados y decide la " +
-          "frontera transaccional, pero no sabe qué motor hay debajo.",
-    items: ["OrderService", "ProductService", "IUnitOfWork", "IOrderRepository"],
-    dependsOn: "→ Domain"
+    textKey: "arch.layer.application",
+    items: ["OrderService", "DropService", "IUnitOfWork", "IOrderRepository"],
+    dependsOn: () => "→ Domain"
   },
   {
     index: "03",
     name: "NainOrder.Infrastructure",
     color: "var(--status-processing)",
-    text: "EF Core, SQLite, configuración Fluent API y consultas de lectura. Implementa las " +
-          "interfaces que declara Application: la dependencia apunta hacia dentro.",
-    items: ["NainOrderDbContext", "UnitOfWork", "AnalyticsRepository", "MoneyConverter"],
-    dependsOn: "→ Application, Domain"
+    textKey: "arch.layer.infrastructure",
+    items: ["NainOrderDbContext", "UnitOfWork", "DropRepository", "MoneyConverter"],
+    dependsOn: () => "→ Application, Domain"
   },
   {
     index: "04",
     name: "NainOrder.Api",
     color: "var(--status-shipped)",
-    text: "Controladores REST, contrato de errores RFC 7807, limitación de tráfico y esta " +
-          "misma interfaz servida como estáticos desde el mismo origen.",
-    items: ["OrdersController", "GlobalExceptionHandler", "wwwroot"],
-    dependsOn: "→ Application, Infrastructure"
+    textKey: "arch.layer.api",
+    items: ["DropsController", "GlobalExceptionHandler", "HoldExpirySweeper", "wwwroot"],
+    dependsOn: () => "→ Application, Infrastructure"
   }
 ];
 
-const DECISIONS = [
-  {
-    title: "El dinero se guarda en céntimos enteros",
-    text: "SQLite no tiene tipo decimal y EF Core lo persistiría como texto, con lo que " +
-          "ORDER BY y SUM operarían sobre cadenas. Un conversor a INTEGER hace exactas la " +
-          "ordenación y la agregación, y elimina el error de coma flotante en importes."
-  },
-  {
-    title: "Concurrencia optimista sobre el stock",
-    text: "Product lleva un token de versión. Si dos peticiones intentan reservar la última " +
-          "unidad a la vez, la segunda falla en el UPDATE y recibe un 409 en lugar de sobrevender."
-  },
-  {
-    title: "Unidad de trabajo explícita",
-    text: "Los repositorios ya no confirman por su cuenta. Añadir una línea toca dos agregados " +
-          "—pedido y producto— y ambos se persisten dentro de la misma transacción o ninguno."
-  },
-  {
-    title: "Los totales del pedido se materializan",
-    text: "Se recalculan en cada cambio de la cesta en lugar de derivarse al leer, de modo que " +
-          "listados y métricas agregan en base de datos sin cargar las líneas de cada pedido."
-  },
-  {
-    title: "Errores como contrato, no como texto",
-    text: "Un único manejador traduce cada excepción a ProblemDetails con un código estable. " +
-          "Un fallo de negocio es 4xx y un fallo técnico sigue siendo 500, nunca al revés."
-  }
-];
+const DECISIONS = ["money", "concurrency", "uow", "totals", "errors", "holds"];
 
 const traceRow = (entry) => html`
   <div class="trace" data-ok="${entry.ok}">
@@ -89,18 +59,15 @@ const traceRow = (entry) => html`
 const markup = (stateMachine) => html`
   <section class="section-head">
     <div>
-      <h1 class="section-head__title">Arquitectura</h1>
-      <p class="section-head__text">
-        Cuatro proyectos con dependencias que apuntan siempre hacia el dominio. Debajo, la
-        traza real de las llamadas que esta interfaz hace contra la API.
-      </p>
+      <h1 class="section-head__title">${t("arch.title")}</h1>
+      <p class="section-head__text">${t("arch.text")}</p>
     </div>
     ${raw(isDemoMode()
       ? html`<a class="btn" href="https://github.com/Nain9Dev/NainOrder" target="_blank" rel="noopener">
-          ${raw(icon("book", { size: 15 }))} Código en GitHub ${raw(icon("external", { size: 13 }))}
+          ${raw(icon("book", { size: 15 }))} ${t("arch.github")} ${raw(icon("external", { size: 13 }))}
         </a>`
       : html`<a class="btn" href="/swagger" target="_blank" rel="noopener">
-          ${raw(icon("book", { size: 15 }))} Abrir Swagger ${raw(icon("external", { size: 13 }))}
+          ${raw(icon("book", { size: 15 }))} ${t("arch.swagger")} ${raw(icon("external", { size: 13 }))}
         </a>`)}
   </section>
 
@@ -111,11 +78,11 @@ const markup = (stateMachine) => html`
           <article class="layer reveal" style="--layer-color:${layer.color};--i:${index}">
             <span class="layer__index">${layer.index}</span>
             <h2 class="layer__name">${layer.name}</h2>
-            <p class="layer__text">${layer.text}</p>
+            <p class="layer__text">${t(layer.textKey)}</p>
             <div class="layer__items">
               ${raw(layer.items.map((item) => `<span class="tag mono">${item}</span>`).join(""))}
             </div>
-            <p class="layer__dep">${raw(icon("layers", { size: 12 }))} ${layer.dependsOn}</p>
+            <p class="layer__dep">${raw(icon("layers", { size: 12 }))} ${layer.dependsOn()}</p>
           </article>
         `
       ).join("")
@@ -126,11 +93,11 @@ const markup = (stateMachine) => html`
     <article class="card">
       <header class="card__header">
         <div>
-          <h2 class="card__title">Traza de red en vivo</h2>
-          <p class="card__hint">Cada llamada que sale de esta interfaz, con su latencia real</p>
+          <h2 class="card__title">${t("arch.trace.title")}</h2>
+          <p class="card__hint">${t("arch.trace.hint")}</p>
         </div>
         <button class="btn btn--ghost btn--sm" type="button" data-action="ping">
-          ${raw(icon("spark", { size: 14 }))} Lanzar petición
+          ${raw(icon("spark", { size: 14 }))} ${t("arch.trace.ping")}
         </button>
       </header>
 
@@ -146,8 +113,8 @@ const markup = (stateMachine) => html`
     <article class="card">
       <header class="card__header">
         <div>
-          <h2 class="card__title">Máquina de estados</h2>
-          <p class="card__hint">Servida por <code class="mono">/api/meta/order-state-machine</code></p>
+          <h2 class="card__title">${t("arch.machine.title")}</h2>
+          <p class="card__hint">${t("arch.machine.hint")} <code class="mono">/api/meta/order-state-machine</code></p>
         </div>
       </header>
 
@@ -160,7 +127,7 @@ const markup = (stateMachine) => html`
                   <span class="badge" data-status="${state.name}">${statusLabel(state.name)}</span>
                   ${raw(
                     state.isTerminal
-                      ? html`<span class="state-node__terminal">estado final</span>`
+                      ? html`<span class="state-node__terminal">${t("arch.machine.terminal")}</span>`
                       : html`<span class="state-node__arrow mono">→</span>
                           ${raw(
                             state.transitions
@@ -180,20 +147,20 @@ const markup = (stateMachine) => html`
   <article class="card">
     <header class="card__header">
       <div>
-        <h2 class="card__title">Decisiones técnicas</h2>
-        <p class="card__hint">Por qué el código es como es, no solo qué hace</p>
+        <h2 class="card__title">${t("arch.decisions.title")}</h2>
+        <p class="card__hint">${t("arch.decisions.hint")}</p>
       </div>
     </header>
 
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       ${raw(
         DECISIONS.map(
-          (decision, index) => html`
+          (key, index) => html`
             <div class="reveal" style="--i:${index}">
               <p style="font-size:var(--text-sm);font-weight:620;margin-bottom:var(--space-2)">
-                ${decision.title}
+                ${t(`arch.decision.${key}.title`)}
               </p>
-              <p class="layer__text">${decision.text}</p>
+              <p class="layer__text">${t(`arch.decision.${key}.text`)}</p>
             </div>
           `
         ).join("")
@@ -203,10 +170,10 @@ const markup = (stateMachine) => html`
 `;
 
 export const architectureView = {
-  title: "Arquitectura",
-  subtitle: "Clean Architecture verificable, no declarativa",
+  get title() { return t("arch.title"); },
+  get subtitle() { return t("arch.subtitle"); },
 
-  /** Baja de la traza al abandonar la vista, para no dejar suscripciones vivas. */
+  /** Unsubscribes from the trace when leaving the view, so no subscription stays alive. */
   destroy() {
     this._unsubscribe?.();
     this._unsubscribe = null;
@@ -221,7 +188,7 @@ export const architectureView = {
     try {
       stateMachine = await api.meta.stateMachine();
     } catch (error) {
-      toastError(error, "No se pudo leer la máquina de estados");
+      toastError(error, t("arch.failed"));
       return;
     }
 
@@ -230,7 +197,7 @@ export const architectureView = {
 
     const appendTrace = (entry) => {
       consoleNode.insertAdjacentHTML("beforeend", traceRow(entry));
-      // Se conserva una ventana corta: la consola es un monitor, no un registro histórico.
+      // A short window is kept: the console is a monitor, not a historical log.
       while (consoleNode.children.length > 60) consoleNode.firstElementChild.remove();
       consoleNode.scrollTop = consoleNode.scrollHeight;
     };

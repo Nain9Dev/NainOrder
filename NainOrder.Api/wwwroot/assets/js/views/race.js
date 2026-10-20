@@ -1,7 +1,7 @@
 /**
- * Carrera de stock: la garantía central del proyecto, ejecutada a la vista.
- * N compradores compiten por M unidades a la vez; el panel pinta lo que la API devuelve
- * y no calcula ninguna cifra: el veredicto "cuadra" lo decide el servidor sobre lo persistido.
+ * Stock race: the project's central guarantee, run in plain sight.
+ * N buyers compete for M units at once; the panel draws what the API returns and computes no
+ * figure itself: the "balanced" verdict is decided by the server over what was persisted.
  */
 
 import { html, icon, raw, render, $, delegate } from "../dom.js";
@@ -9,6 +9,7 @@ import { api, isDemoMode } from "../api.js";
 import { toastError } from "../toast.js";
 import { withBusy } from "../overlay.js";
 import { fmtNumber } from "../format.js";
+import { t } from "../i18n.js";
 
 const DEFAULTS = { buyers: 24, units: 5 };
 
@@ -21,7 +22,7 @@ const slider = (name, label, min, max, value) => html`
 
 const tile = (buyer, index, outcome) => html`
   <span class="race__tile" data-outcome="${outcome ?? "idle"}" style="--i:${index}"
-        title="${buyer ? `Comprador ${buyer.buyer}` : ""}">
+        title="${buyer ? `#${buyer.buyer}` : ""}">
     ${buyer && buyer.attempts > 1 ? raw(`<sup>${buyer.attempts - 1}</sup>`) : ""}
   </span>
 `;
@@ -38,14 +39,12 @@ const verdict = (race) => {
     <div class="race__verdict" data-balanced="${race.balanced}">
       <span class="race__verdict-icon">${raw(icon(race.balanced ? "check" : "alert", { size: 20 }))}</span>
       <div>
-        <p class="race__verdict-title">
-          ${race.balanced ? "Cuadra al céntimo: ninguna unidad se vendió dos veces" : "El inventario no cuadra"}
-        </p>
+        <p class="race__verdict-title">${t(race.balanced ? "race.verdict.ok" : "race.verdict.bad")}</p>
         <p class="race__verdict-text">
-          ${fmtNumber(race.sold)} vendidas + ${fmtNumber(race.remaining)} restantes = ${fmtNumber(race.units)} en stock.
-          ${retries > 0
-            ? `${fmtNumber(retries)} reintentos tras perder una carrera de escritura.`
-            : "Sin colisiones en esta ejecución."}
+          ${t("race.verdict.text", {
+            sold: fmtNumber(race.sold), remaining: fmtNumber(race.remaining), units: fmtNumber(race.units)
+          })}
+          ${retries > 0 ? t("race.verdict.retries", { n: fmtNumber(retries) }) : t("race.verdict.noRetries")}
         </p>
       </div>
     </div>
@@ -54,57 +53,52 @@ const verdict = (race) => {
 
 const stats = (race) => html`
   <div class="race__stats">
-    <div><span class="numeric">${fmtNumber(race.buyers)}</span><small>compradores</small></div>
-    <div><span class="numeric">${fmtNumber(race.units)}</span><small>unidades</small></div>
-    <div data-tone="win"><span class="numeric">${fmtNumber(race.sold)}</span><small>consiguieron una</small></div>
-    <div data-tone="lose"><span class="numeric">${fmtNumber(race.rejected)}</span><small>rechazados · 409</small></div>
+    <div><span class="numeric">${fmtNumber(race.buyers)}</span><small>${t("race.stat.buyers")}</small></div>
+    <div><span class="numeric">${fmtNumber(race.units)}</span><small>${t("race.stat.units")}</small></div>
+    <div data-tone="win"><span class="numeric">${fmtNumber(race.sold)}</span><small>${t("race.stat.won")}</small></div>
+    <div data-tone="lose"><span class="numeric">${fmtNumber(race.rejected)}</span><small>${t("race.stat.rejected")}</small></div>
   </div>
 `;
 
 const markup = () => html`
   <section class="section-head">
     <div>
-      <h1 class="section-head__title">Carrera de stock</h1>
-      <p class="section-head__text">
-        Muchos compradores, pocas unidades, el mismo instante. Pulsa y comprueba que nunca se vende de más.
-      </p>
+      <h1 class="section-head__title">${t("race.title")}</h1>
+      <p class="section-head__text">${t("race.text")}</p>
     </div>
   </section>
 
   ${raw(isDemoMode()
     ? html`<div class="demo-banner">
         <span class="demo-banner__mark">${raw(icon("info", { size: 15 }))}</span>
-        <p class="demo-banner__text">
-          <strong>Aquí corre en secuencia.</strong> El motor del navegador tiene un solo hilo y no puede
-          competir de verdad. La carrera real se ve con la API .NET en marcha.
-        </p>
+        <p class="demo-banner__text"><strong>${t("race.demo.title")}</strong> ${t("race.demo.text")}</p>
       </div>`
     : "")}
 
   <article class="card race">
     <div class="race__controls">
-      ${raw(slider("buyers", "Compradores", 2, 64, DEFAULTS.buyers))}
-      ${raw(slider("units", "Unidades en stock", 1, 32, DEFAULTS.units))}
+      ${raw(slider("buyers", t("race.buyers"), 2, 64, DEFAULTS.buyers))}
+      ${raw(slider("units", t("race.units"), 1, 32, DEFAULTS.units))}
       <button class="btn btn--primary" type="button" data-action="run">
-        ${raw(icon("race", { size: 15 }))} Lanzar carrera
+        ${raw(icon("race", { size: 15 }))} ${t("race.run")}
       </button>
     </div>
 
-    <div class="race__grid" data-grid aria-label="Un cuadro por comprador">${raw(idleGrid(DEFAULTS.buyers))}</div>
+    <div class="race__grid" data-grid aria-label="${t("race.grid")}">${raw(idleGrid(DEFAULTS.buyers))}</div>
 
     <div data-result aria-live="polite"></div>
 
     <ul class="race__legend">
-      <li><i data-outcome="won"></i> consiguió una unidad</li>
-      <li><i data-outcome="rejected"></i> rechazado por falta de stock</li>
-      <li><sup>n</sup> reintentos tras una colisión</li>
+      <li><i data-outcome="won"></i> ${t("race.legend.won")}</li>
+      <li><i data-outcome="rejected"></i> ${t("race.legend.rejected")}</li>
+      <li><sup>n</sup> ${t("race.legend.retries")}</li>
     </ul>
   </article>
 `;
 
 export const raceView = {
-  title: "Carrera de stock",
-  subtitle: "La garantía anti-sobreventa, a la vista",
+  get title() { return t("race.title"); },
+  get subtitle() { return t("race.subtitle"); },
 
   async render(outlet) {
     const root = render(outlet, markup());
@@ -124,7 +118,7 @@ export const raceView = {
         grid.innerHTML = resultGrid(race);
         result.innerHTML = stats(race) + verdict(race);
       } catch (error) {
-        toastError(error, "La carrera no se pudo ejecutar");
+        toastError(error, t("race.failed"));
       }
     });
   }

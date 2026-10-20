@@ -9,6 +9,7 @@ import { api } from "./api.js";
 import { openDrawer, confirmAction, withBusy } from "./overlay.js";
 import { toast, toastError, toastSuccess } from "./toast.js";
 import { setActiveOrder, getState, clearActiveOrder } from "./state.js";
+import { t } from "./i18n.js";
 import {
   fmtMoney, fmtDateTime, fmtNumber, statusLabel, STATUS_ICONS, TRANSITION_ACTIONS
 } from "./format.js";
@@ -43,7 +44,7 @@ const lifecycle = (order) => {
         <span class="lifecycle__marker">${raw(icon(done ? "check" : STATUS_ICONS[status], { size: 12 }))}</span>
         <div>
           <p class="lifecycle__label">${statusLabel(status)}</p>
-          <p class="lifecycle__time">${timestamps[status] ? fmtDateTime(timestamps[status]) : "Pendiente"}</p>
+          <p class="lifecycle__time">${timestamps[status] ? fmtDateTime(timestamps[status]) : t("panel.pending")}</p>
         </div>
       </li>
     `;
@@ -55,7 +56,7 @@ const lifecycle = (order) => {
           style="--step-color:${STEP_COLORS.Cancelled}">
         <span class="lifecycle__marker">${raw(icon("ban", { size: 12 }))}</span>
         <div>
-          <p class="lifecycle__label">Cancelado</p>
+          <p class="lifecycle__label">${statusLabel("Cancelled")}</p>
           <p class="lifecycle__time">${fmtDateTime(order.cancelledAt)}</p>
         </div>
       </li>
@@ -75,13 +76,13 @@ const itemRow = (item, editable) => html`
       editable
         ? html`
             <div class="stepper">
-              <button type="button" data-qty="down" aria-label="Reducir cantidad"
+              <button type="button" data-qty="down" aria-label="${t("panel.qty.down")}"
                       ${item.quantity <= 1 ? "disabled" : ""}>${raw(icon("minus", { size: 13 }))}</button>
               <span class="stepper__value">${item.quantity}</span>
-              <button type="button" data-qty="up" aria-label="Aumentar cantidad">${raw(icon("plus", { size: 13 }))}</button>
+              <button type="button" data-qty="up" aria-label="${t("panel.qty.up")}">${raw(icon("plus", { size: 13 }))}</button>
             </div>
             <button class="btn btn--ghost btn--icon btn--sm" type="button" data-remove
-                    aria-label="Quitar ${item.productName}">${raw(icon("trash", { size: 14 }))}</button>
+                    aria-label="${t("panel.remove", { name: item.productName })}">${raw(icon("trash", { size: 14 }))}</button>
           `
         : ""
     )}
@@ -113,15 +114,15 @@ const body = (order) => {
       </div>
 
       <div class="card" style="padding:var(--space-4)">
-        <p class="card__hint" style="margin-bottom:var(--space-3)">Ciclo de vida</p>
+        <p class="card__hint" style="margin-bottom:var(--space-3)">${t("panel.lifecycle")}</p>
         ${raw(lifecycle(order))}
       </div>
     </section>
 
     <section class="stack">
       <div class="row row--between">
-        <h3 class="card__title">Líneas del pedido</h3>
-        <span class="tag">${fmtNumber(order.totalUnits)} unidades</span>
+        <h3 class="card__title">${t("panel.lines.title")}</h3>
+        <span class="tag">${t("panel.units", { count: fmtNumber(order.totalUnits) })}</span>
       </div>
 
       ${raw(
@@ -129,8 +130,8 @@ const body = (order) => {
           ? html`
               <div class="empty" style="padding:var(--space-6) var(--space-4)">
                 <span class="empty__icon">${raw(icon("cart", { size: 22 }))}</span>
-                <p class="empty__title">Cesta vacía</p>
-                <p class="empty__text">Añade productos desde el catálogo para poder cobrar el pedido.</p>
+                <p class="empty__title">${t("panel.empty.title")}</p>
+                <p class="empty__text">${t("panel.empty.text")}</p>
               </div>
             `
           : html`<ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:var(--space-2)">
@@ -139,29 +140,28 @@ const body = (order) => {
       )}
 
       <div class="totals">
-        <div class="totals__row"><span>Líneas</span><span>${order.items.length}</span></div>
-        <div class="totals__row"><span>Unidades</span><span>${fmtNumber(order.totalUnits)}</span></div>
-        <div class="totals__row totals__row--grand"><span>Total</span><span>${fmtMoney(order.totalAmount)}</span></div>
+        <div class="totals__row"><span>${t("panel.totals.lines")}</span><span>${order.items.length}</span></div>
+        <div class="totals__row"><span>${t("panel.totals.units")}</span><span>${fmtNumber(order.totalUnits)}</span></div>
+        <div class="totals__row totals__row--grand"><span>${t("panel.totals.total")}</span><span>${fmtMoney(order.totalAmount)}</span></div>
       </div>
     </section>
 
     <section class="stack">
-      <h3 class="card__title">Cliente</h3>
+      <h3 class="card__title">${t("panel.customer")}</h3>
       <div class="card" style="padding:var(--space-4)">
         <p style="font-weight:600;font-size:var(--text-sm)">${order.customerName ?? "—"}</p>
-        <p class="card__hint">${order.customerEmail ?? "Sin email registrado"}</p>
+        <p class="card__hint">${order.customerEmail ?? t("panel.noEmail")}</p>
       </div>
     </section>
 
     ${raw(
       transitions
         ? html`<section class="stack">
-            <h3 class="card__title">Acciones disponibles</h3>
-            <p class="card__hint">Los botones salen de <code class="mono">nextStates</code>, que publica el
-              propio dominio: si una transición no está permitida, aquí no aparece.</p>
+            <h3 class="card__title">${t("panel.actions.title")}</h3>
+            <p class="card__hint">${raw(t("panel.actions.hint", { field: '<code class="mono">nextStates</code>' }))}</p>
             <div class="row">${raw(transitions)}</div>
           </section>`
-        : html`<p class="card__hint">Este pedido está en un estado final y no admite más transiciones.</p>`
+        : html`<p class="card__hint">${t("panel.actions.final")}</p>`
     )}
   `;
 };
@@ -177,14 +177,14 @@ export const openOrderPanel = async (orderId, { onChange } = {}) => {
   try {
     order = await api.orders.get(orderId);
   } catch (error) {
-    toastError(error, "No se pudo abrir el pedido");
+    toastError(error, t("panel.openFailed"));
     // Un pedido activo que ya no existe (base efímera reiniciada) deja de estarlo.
     if (error.status === 404 && getState().activeOrderId === orderId) clearActiveOrder();
     return;
   }
 
   const drawer = openDrawer({
-    title: `Pedido ${order.reference}`,
+    title: t("panel.title", { reference: order.reference }),
     subtitle: fmtDateTime(order.createdAt),
     body: body(order)
   });
@@ -219,16 +219,16 @@ export const openOrderPanel = async (orderId, { onChange } = {}) => {
     const run = () =>
       mutate(button, () => api.orders.transition(order.id, endpoint),
         endpoint === "cancel"
-          ? "Pedido cancelado y stock repuesto en el catálogo"
-          : "Transición aplicada");
+          ? t("panel.toast.cancelled")
+          : t("panel.toast.transition"));
 
     if (endpoint !== "cancel") return run();
 
     confirmAction({
-      title: "Cancelar el pedido",
-      message: "Se devolverán al catálogo todas las unidades reservadas. Esta acción no se puede deshacer.",
-      confirmLabel: "Cancelar pedido",
-      cancelLabel: "Volver",
+      title: t("panel.cancel.title"),
+      message: t("panel.cancel.message"),
+      confirmLabel: t("transition.cancel"),
+      cancelLabel: t("panel.cancel.back"),
       danger: true
     }).then((confirmed) => confirmed && run());
   });
@@ -246,7 +246,7 @@ export const openOrderPanel = async (orderId, { onChange } = {}) => {
 
   delegate(drawer.panel, "click", "[data-remove]", (event, button) => {
     const productId = button.closest("[data-product]").dataset.product;
-    mutate(button, () => api.orders.removeItem(order.id, productId), "Línea eliminada y stock repuesto");
+    mutate(button, () => api.orders.removeItem(order.id, productId), t("panel.toast.removed"));
   });
 
   return drawer;
@@ -264,7 +264,7 @@ export const addProductToActiveOrder = async (product, quantity = 1) => {
   if (!orderId) {
     const customer = customers[0];
     if (!customer) {
-      toast({ title: "No hay clientes", text: "Crea un cliente antes de abrir un pedido.", variant: "warning" });
+      toast({ title: t("panel.noCustomers"), text: t("panel.noCustomersText"), variant: "warning" });
       return null;
     }
 
