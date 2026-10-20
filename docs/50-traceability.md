@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (82/82 tests)
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (110/110 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -15,6 +15,8 @@ Test suites:
 | `Api.OrderFlowTests` | Integration over HTTP | The real application with its migrations and middleware |
 | `Api.ConcurrencyTests` | Integration, concurrent | Simultaneous requests competing for the same units |
 | `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
+| `Domain.DropTests` | Example-based + property-based | The drop aggregate with an explicit clock: holds, expiry, limits, the held-plus-sold invariant |
+| `Api.DropFlowTests` | Integration, concurrent | Drops over HTTP with a hand-moved clock, a 40-buyer crowd and UTC serialisation |
 | `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
 | `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
 
@@ -75,6 +77,19 @@ Test suites:
 | REQ-071 | `StockRaceTests.A_race_with_more_units_than_buyers_sells_to_everyone` (conflicts are retried until every buyer has a final answer) and the `insufficient_stock` assertion in the 24-vs-5 race |
 | REQ-072 | `StockRaceTests.A_race_never_sells_more_units_than_exist_and_balances_to_the_unit` |
 | REQ-073 | `StockRaceTests.A_race_outside_the_allowed_range_is_rejected_with_400` (four boundary cases) |
+
+## Drops
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-080 | `DropTests.A_drop_is_scheduled_until_it_opens_and_live_afterwards`, `A_drop_rejects_invalid_configuration`; `DropFlowTests.A_new_drop_reports_its_units_and_goes_live`, `An_invalid_drop_configuration_is_rejected_with_400` |
+| REQ-081 | `DropTests.Taking_from_a_drop_that_is_not_live_is_rejected`; `DropFlowTests.A_scheduled_drop_rejects_takes_until_it_opens` |
+| REQ-082 | `DropTests.Taking_units_creates_a_hold_that_reduces_availability`, `Asking_for_more_than_is_available_is_rejected_and_leaves_the_drop_untouched`; `DropFlowTests.Taking_and_confirming_turns_a_hold_into_a_paid_order` |
+| REQ-083 | `DropTests.An_unconfirmed_hold_returns_its_units_when_its_window_ends`, `Sweeping_marks_expired_holds_and_reports_how_many`; `DropFlowTests.An_unconfirmed_hold_expires_and_returns_its_units`, `Sweeping_persists_the_expiry_of_due_holds` |
+| REQ-084 | `DropTests.Confirming_a_hold_in_time_sells_the_units_for_good`, `Confirming_after_the_window_is_rejected`, `Only_the_owner_can_confirm_a_hold`, `A_hold_cannot_be_confirmed_twice`; `DropFlowTests.Taking_and_confirming_turns_a_hold_into_a_paid_order`, `A_hold_of_another_buyer_cannot_be_confirmed` |
+| REQ-085 | `DropTests.Held_plus_sold_never_exceeds_the_units_of_the_drop` (property); `DropFlowTests.A_crowd_never_holds_or_sells_more_units_than_the_drop_contains` (40 concurrent buyers) |
+| REQ-086 | `DropTests.An_unconfirmed_hold_returns_its_units_when_its_window_ends`; `DropFlowTests.An_unconfirmed_hold_expires_and_returns_its_units` |
+| REQ-088 | `DropTests.A_buyer_cannot_exceed_the_per_buyer_limit_across_holds`, `Expired_units_do_not_count_against_the_buyer_limit`; `DropFlowTests.A_buyer_over_the_limit_is_rejected_with_409` |
 
 ## HTTP contract
 

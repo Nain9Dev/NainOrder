@@ -12,3 +12,4 @@ Records of significant architectural and design decisions for NainOrder.
 | [ADR-0006](ADR-0006-dependency-free-client-panel.md) | Dependency-free client panel | Proposed |
 | [ADR-0007](ADR-0007-optimistic-concurrency-on-order-aggregate.md) | Optimistic concurrency on the order aggregate | Proposed |
 | [ADR-0008](ADR-0008-drops-with-expiring-holds.md) | Drops with expiring holds | Approved |
+| [ADR-0009](ADR-0009-sqlite-wal-mode.md) | SQLite in WAL mode | Proposed |

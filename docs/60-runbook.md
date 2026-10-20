@@ -61,6 +61,12 @@ bypass it.
 - **Ephemeral data.** With no persistent volume the database is recreated on every deploy. The seed
   makes the instance usable immediately, so this is acceptable for a demonstration and not for
   production.
+- **WAL files.** The database runs in WAL mode ([ADR-0009](30-decisions/ADR-0009-sqlite-wal-mode.md)),
+  so `nainorder.db-wal` and `-shm` sit beside it: copy all three together.
+- **Drops have a larger rate limit** (1,200 requests per minute per address on `/api/drops`, 120
+  elsewhere) because a drop page polls every second and its crowd simulator bursts.
+- **Unconfirmed drop holds expire** after their window and a background service sweeps them every
+  second; reads also apply the clock, so a stopped sweeper never leaves units locked.
 - **SQLite serialises writes.** Fine at demonstration load. Sustained concurrent write traffic needs
   a different engine; that is a `UseSqlite` change plus a migration, not a domain change.
 - **No authentication.** Every endpoint is public by design — see the non-goals in

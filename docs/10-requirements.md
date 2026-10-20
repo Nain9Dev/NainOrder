@@ -64,6 +64,22 @@ says.
 | REQ-072 | The system shall report `sold + remaining = units`, `sold <= units` and `remaining >= 0` as a `balanced` verdict computed from the persisted product, not from the buyers' answers. |
 | REQ-073 | If `buyers` is outside 2..64 or `units` is outside 1..32, then the system shall reject the request with `400` before any data is created. |
 
+## Drops
+
+Phase 1 of [specs/002-drops](../specs/002-drops/spec.md). REQ-087 (live stream) is specified there and
+enters this table when it is implemented and tested.
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-080 | When a shop owner creates a drop with a product, a number of units, an opening time and a per-buyer limit, the system shall publish it as `Scheduled` until it opens. |
+| REQ-081 | While a drop is not `Live`, the system shall reject any attempt to take a unit with `409 drop_not_live`. |
+| REQ-082 | When a buyer takes units from a live drop, the system shall create a hold of at most the per-buyer limit, reserving those units atomically. |
+| REQ-083 | When a hold is not confirmed within its time window, the system shall expire it and return its units to the drop. |
+| REQ-084 | When a buyer confirms an unexpired hold, the system shall turn it into a paid order for that buyer. |
+| REQ-085 | The system shall never hold or sell more units than the drop contains, whatever the concurrency. |
+| REQ-086 | When a drop's units are all sold or held, the system shall report it `SoldOut`; when expired holds free units again, it shall report it `Live`. |
+| REQ-088 | If a buyer exceeds the per-buyer limit across holds and orders of one drop, then the system shall reject the request with `409 buyer_limit_reached`. |
+
 ## HTTP contract
 
 | ID | Requirement |
