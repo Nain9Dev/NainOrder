@@ -68,6 +68,58 @@ public sealed class DuplicateOrderItemException : DomainException
         => ProductId = productId;
 }
 
+/// <summary>The drop has not opened yet.</summary>
+public sealed class DropNotLiveException : DomainException
+{
+    public override string Code => "drop_not_live";
+
+    public DateTime OpensAt { get; }
+
+    public DropNotLiveException(DateTime opensAt)
+        : base($"The drop opens at {opensAt:O}.")
+        => OpensAt = opensAt;
+}
+
+/// <summary>The buyer already holds or bought as many units as one buyer may.</summary>
+public sealed class BuyerLimitReachedException : DomainException
+{
+    public override string Code => "buyer_limit_reached";
+
+    public int Limit { get; }
+    public int Owned { get; }
+
+    public BuyerLimitReachedException(int limit, int owned)
+        : base($"Limit of {limit} per buyer reached ({owned} already held or bought).")
+    {
+        Limit = limit;
+        Owned = owned;
+    }
+}
+
+/// <summary>The hold's window ended before it was confirmed.</summary>
+public sealed class HoldExpiredException : DomainException
+{
+    public override string Code => "hold_expired";
+
+    public HoldExpiredException(Guid holdId) : base($"Hold {holdId} has expired.") { }
+}
+
+/// <summary>The hold exists but can no longer be confirmed (already confirmed).</summary>
+public sealed class HoldNotActiveException : DomainException
+{
+    public override string Code => "hold_not_active";
+
+    public HoldNotActiveException(Guid holdId) : base($"Hold {holdId} is no longer active.") { }
+}
+
+/// <summary>No hold with that id belongs to this buyer in this drop.</summary>
+public sealed class HoldNotFoundException : DomainException
+{
+    public override string Code => "hold_not_found";
+
+    public HoldNotFoundException(Guid holdId) : base($"Hold {holdId} was not found.") { }
+}
+
 /// <summary>La línea de pedido referenciada no pertenece al pedido.</summary>
 public sealed class OrderItemNotFoundException : DomainException
 {

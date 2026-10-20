@@ -8,6 +8,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Drops (phase 1 of `specs/002-drops`, ADR-0008): a fixed number of units sold to a crowd through
+  short expiring holds, with `/api/drops` endpoints, a `Drop` panel view with a crowd simulator, and
+  an in-browser engine for the static demo. REQ-080 to REQ-086 and REQ-088.
+- SQLite runs in WAL mode so a crowd of buyers no longer surfaces `database is locked` as a `500`
+  ([ADR-0009](30-decisions/ADR-0009-sqlite-wal-mode.md)); drops get a larger rate-limit window.
 - Stock race: `POST /api/demo/stock-race` and a panel view that run the "never oversell" guarantee
   live — N buyers against M units, conflicts retried, verdict computed from persisted stock
   (`specs/001-stock-race`, REQ-070 to REQ-073).

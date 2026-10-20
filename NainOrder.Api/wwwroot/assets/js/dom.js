@@ -111,7 +111,8 @@ const ICON_PATHS = {
   spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M12 8.5 13.4 11 16 12l-2.6 1-1.4 2.5L10.6 13 8 12l2.6-1Z"/>',
   layers: '<path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z"/><path d="m4 12 8 4.5 8-4.5"/>',
   filter: '<path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/>',
-  race: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>'
+  race: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+  ticket: '<path d="M3 8a2 2 0 0 0 0 8v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 1 0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1Z"/><path d="M13 5v14" stroke-dasharray="2 3"/>'
 };
 
 /**

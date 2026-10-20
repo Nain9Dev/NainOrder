@@ -84,12 +84,30 @@ const buildUrl = (path, query) => {
   return url;
 };
 
-async function request(method, path, { body, query, signal } = {}) {
+/**
+ * Anonymous visitor identity for drops (Q-005): a random token kept in this browser, sent as
+ * `X-Buyer-Token`. It identifies a visitor, never a person.
+ */
+export const buyerToken = () => {
+  try {
+    let token = localStorage.getItem("nainorder.buyer");
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem("nainorder.buyer", token);
+    }
+    return token;
+  } catch {
+    // Storage blocked: a per-page token still lets this visit work.
+    return (buyerToken.fallback ??= crypto.randomUUID());
+  }
+};
+
+async function request(method, path, { body, query, signal, headers } = {}) {
   const startedAt = performance.now();
 
   if (isStaticHost) {
     try {
-      const result = await mockDispatch(method, path, { body, query });
+      const result = await mockDispatch(method, path, { body, query, headers });
       const elapsedMs = performance.now() - startedAt;
       const queryStr = query && Object.keys(query).length > 0 ? `?${new URLSearchParams(query).toString()}` : "";
       publishTrace({
@@ -122,18 +140,20 @@ async function request(method, path, { body, query, signal } = {}) {
     response = await fetch(url, {
       method,
       signal,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: body || headers ? { ...(body ? { "Content-Type": "application/json" } : {}), ...headers } : undefined,
       body: body ? JSON.stringify(body) : undefined
     });
   } catch (networkError) {
     // Backend offline: conmuta con gracia al motor de dominio en memoria
     isStaticHost = true;
-    return request(method, path, { body, query, signal });
+    return request(method, path, { body, query, signal, headers });
   }
 
-  if (response.status === 404) {
+  // A 404 with a problem+json body is the API answering about a missing resource; only a 404
+  // without it means there is no API behind this host (static hosting), so fall back then.
+  if (response.status === 404 && !response.headers.get("content-type")?.includes("problem+json")) {
     isStaticHost = true;
-    return request(method, path, { body, query, signal });
+    return request(method, path, { body, query, signal, headers });
   }
 
   const elapsedMs = performance.now() - startedAt;
@@ -189,6 +209,19 @@ export const api = {
 
   meta: {
     stateMachine: () => request("GET", "/meta/order-state-machine")
+  },
+
+  drops: {
+    list: () => request("GET", "/drops"),
+    get: (id) => request("GET", `/drops/${id}`, { headers: { "X-Buyer-Token": buyerToken() } }),
+    create: (body) => request("POST", "/drops", { body }),
+    take: (id, quantity) =>
+      request("POST", `/drops/${id}/holds`, { body: { quantity }, headers: { "X-Buyer-Token": buyerToken() } }),
+    confirm: (id, holdId) =>
+      request("POST", `/drops/${id}/holds/${holdId}/confirm`, { headers: { "X-Buyer-Token": buyerToken() } }),
+    /** Takes as another visitor; used by the crowd simulator. */
+    takeAs: (id, token, quantity) =>
+      request("POST", `/drops/${id}/holds`, { body: { quantity }, headers: { "X-Buyer-Token": token } })
   },
 
   demo: {

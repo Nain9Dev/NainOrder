@@ -27,6 +27,14 @@ export interface CreateCustomerRequest {
   email?: string;
 }
 
+export interface CreateDropRequest {
+  productId?: string;
+  totalUnits?: number;
+  perBuyerLimit?: number;
+  holdSeconds?: number;
+  opensInSeconds?: number;
+}
+
 export interface CreateOrderRequest {
   customerId?: string;
 }
@@ -59,6 +67,32 @@ export interface DashboardStatsDto {
   statusBreakdown?: StatusBreakdownDto[];
   revenueTimeline?: RevenuePointDto[];
   topProducts?: TopProductDto[];
+}
+
+export interface DropDto {
+  id?: string;
+  productId?: string;
+  productName?: string;
+  productSku?: string;
+  unitPrice?: number;
+  totalUnits?: number;
+  available?: number;
+  held?: number;
+  sold?: number;
+  status?: string;
+  opensAt?: string;
+  perBuyerLimit?: number;
+  holdSeconds?: number;
+  serverTime?: string;
+  myHolds?: HoldDto[];
+}
+
+export interface HoldDto {
+  id?: string;
+  quantity?: number;
+  expiresAt?: string;
+  state?: string;
+  orderId?: string;
 }
 
 export interface OrderDto {
@@ -190,6 +224,10 @@ export interface StockRaceResultDto {
   balanced?: boolean;
   elapsedMilliseconds?: number;
   results?: StockRaceBuyerDto[];
+}
+
+export interface TakeUnitsRequest {
+  quantity?: number;
 }
 
 export interface TopProductDto {

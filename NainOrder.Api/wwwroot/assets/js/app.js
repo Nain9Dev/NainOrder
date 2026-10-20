@@ -13,9 +13,11 @@ import { catalogView } from "./views/catalog.js";
 import { ordersView } from "./views/orders.js";
 import { architectureView } from "./views/architecture.js";
 import { raceView } from "./views/race.js";
+import { dropView } from "./views/drop.js";
 
 const NAV = [
   { path: "/panel", label: "Panel", icon: "dashboard", view: dashboardView },
+  { path: "/drop", label: "Drop", icon: "ticket", view: dropView },
   { path: "/catalogo", label: "Catálogo", icon: "catalog", view: catalogView },
   { path: "/pedidos", label: "Pedidos", icon: "orders", view: ordersView },
   { path: "/carrera", label: "Carrera de stock", icon: "race", view: raceView },

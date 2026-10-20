@@ -9,6 +9,8 @@ public class NainOrderDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Drop> Drops => Set<Drop>();
+    public DbSet<Hold> Holds => Set<Hold>();
 
     public NainOrderDbContext(DbContextOptions<NainOrderDbContext> options) : base(options)
     {

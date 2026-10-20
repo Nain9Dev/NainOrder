@@ -894,8 +894,112 @@
   background: var(--danger);
 }
 
+/* --------------------------------------------------------------------------
+   Drop
+   -------------------------------------------------------------------------- */
+.drop {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.drop__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.drop__name {
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.drop__price {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+}
+
+.drop__state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.drop__clock {
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+
+.drop__grid {
+  --cell: 44px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+  gap: var(--space-2);
+}
+
+.drop__cell,
+.race__legend i[data-cell] {
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-default);
+  background: var(--surface-2);
+}
+
+.drop__cell {
+  aspect-ratio: 1;
+  transition: background var(--duration-base) var(--ease), border-color var(--duration-base) var(--ease);
+}
+
+.drop__cell[data-cell="available"], .race__legend i[data-cell="available"] { background: color-mix(in srgb, var(--success) 18%, transparent); border-color: var(--success); }
+.drop__cell[data-cell="held"], .race__legend i[data-cell="held"] { background: color-mix(in srgb, var(--warning) 38%, transparent); border-color: var(--warning); }
+.drop__cell[data-cell="sold"], .race__legend i[data-cell="sold"] { background: var(--brand-2); border-color: transparent; }
+.drop__cell[data-mine] { outline: 2px solid var(--brand-3); outline-offset: 1px; }
+
+.drop__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.drop__hold {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.drop__hold[hidden] { display: none; }
+
+.drop__hold-bar {
+  flex: 1 1 140px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.drop__hold-bar i {
+  display: block;
+  height: 100%;
+  background: var(--warning);
+  transition: width 250ms linear;
+}
+
+.drop-recent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.drop-recent__item { cursor: pointer; }
+
 @media (prefers-reduced-motion: reduce) {
   .race__tile { animation: none; }
+  .drop__cell, .drop__hold-bar i { transition: none; }
 }
 
 @media (max-width: 620px) {
