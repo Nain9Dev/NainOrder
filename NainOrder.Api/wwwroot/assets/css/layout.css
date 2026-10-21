@@ -376,4 +376,78 @@
   .grid--kpi {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
+
+  /* Phones: the top bar keeps only what is needed; the rest lives in the drawer and the palette. */
+  .topbar__actions .lang {
+    order: -1;
+  }
+
+  .topbar__title {
+    font-size: var(--text-base);
+  }
+}
+
+/* Touch screens: primary controls reach the 44 px minimum (REQ-102). */
+@media (pointer: coarse) {
+  .btn,
+  .seg__btn,
+  .lang__btn {
+    min-height: 44px;
+  }
+
+  .btn--icon {
+    min-width: 44px;
+  }
+}
+
+/* Notches and the iOS status bar: respect the safe areas when installed or full screen. */
+.topbar {
+  padding-top: max(var(--space-3), env(safe-area-inset-top));
+}
+
+.content {
+  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
+}
+
+.offline-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  border-bottom: 1px solid var(--warning);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.offline-notice[hidden] {
+  display: none;
+}
+
+/* Purchases need the server: offline, the actions say so by being unavailable. */
+html[data-offline] [data-action="take"],
+html[data-offline] [data-action="confirm"],
+html[data-offline] [data-action="crowd"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* The buyer link (#/d/<id>): the buyer page alone, as on a phone that scanned the QR code. */
+html[data-standalone] .app {
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 0;
+}
+
+html[data-standalone] .sidebar,
+html[data-standalone] .topbar,
+html[data-standalone] .nav-scrim,
+html[data-standalone] nain-ecosystem-bar {
+  display: none;
+}
+
+html[data-standalone] .content {
+  max-width: 560px;
+  padding-top: max(var(--space-5), env(safe-area-inset-top));
+  padding-inline: max(var(--space-4), env(safe-area-inset-left));
 }

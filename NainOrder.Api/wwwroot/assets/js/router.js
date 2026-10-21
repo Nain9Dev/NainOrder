@@ -25,15 +25,25 @@ export const navigate = (path) => {
   window.location.hash = path;
 };
 
+/**
+ * Exact paths win. A route registered as `/d/*` also matches `/d/<id>` and hands the view the
+ * segment as `params.id`: the buyer link of a drop, which must work from a QR code.
+ */
 const resolve = () => {
   const path = currentPath();
-  const view = routes.get(path) ?? notFound;
-  return { path, view };
+  const exact = routes.get(path);
+  if (exact) return { path, view: exact, params: {} };
+
+  const [, head, id] = path.split("/");
+  const parametrised = id ? routes.get(`/${head}/*`) : undefined;
+  if (parametrised) return { path: `/${head}/*`, view: parametrised, params: { id } };
+
+  return { path, view: notFound, params: {} };
 };
 
 export const startRouter = (outlet) => {
   const run = async () => {
-    const { path, view } = resolve();
+    const { path, view, params } = resolve();
     if (!view) return;
 
     // Cada vista puede liberar temporizadores o suscripciones antes de desaparecer.
@@ -44,7 +54,7 @@ export const startRouter = (outlet) => {
     onChange(path, view);
 
     try {
-      await view.render(outlet);
+      await view.render(outlet, { params });
     } finally {
       outlet.removeAttribute("aria-busy");
     }

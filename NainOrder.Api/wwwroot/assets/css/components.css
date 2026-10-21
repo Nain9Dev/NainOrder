@@ -52,6 +52,12 @@
 /* --------------------------------------------------------------------------
    Botones
    -------------------------------------------------------------------------- */
+/* `display: inline-flex` below would beat the user-agent `[hidden]` rule and leave an empty
+   button visible (the active-order and install buttons start hidden). */
+.btn[hidden] {
+  display: none;
+}
+
 .btn {
   --btn-bg: var(--surface-2);
   --btn-fg: var(--text-primary);
