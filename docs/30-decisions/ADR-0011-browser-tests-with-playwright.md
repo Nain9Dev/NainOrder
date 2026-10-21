@@ -1,6 +1,6 @@
 # ADR-0011 — Browser tests with Playwright, outside the panel
 
-**Status:** Proposed
+**Status:** Approved (2026-10-21, by the owner delegating the decision to the agent's best judgement)
 
 ## Context
 
