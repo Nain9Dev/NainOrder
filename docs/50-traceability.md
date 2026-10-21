@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (123/123 tests)
+**Status:** Active · verified against green runs of `dotnet test NainOrder.slnx -c Release` (123/123 tests) and `npx playwright test` in `e2e/` (25/25 browser tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -17,6 +17,7 @@ Test suites:
 | `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
 | `Domain.DropTests` | Example-based + property-based | The drop aggregate with an explicit clock: holds, expiry, limits, the held-plus-sold invariant |
 | `Api.DropFlowTests` | Integration, concurrent | Drops over HTTP with a hand-moved clock, a 40-buyer crowd and UTC serialisation |
+| `e2e/tests/*.spec.ts` | Browser (Playwright), real application | Landing, roles, language, buyer link and QR, offline shell, 360 px layout |
 | `Api.PwaAssetsTests` | Contract | Manifest, icons and service-worker precache list match the files served |
 | `Api.I18nParityTests` | Contract | Both panel languages define the same keys and placeholders |
 | `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
@@ -97,7 +98,13 @@ Test suites:
 
 | Requirement | Test |
 | :--- | :--- |
-| REQ-095 | `I18nParityTests.Spanish_and_English_define_exactly_the_same_keys`, `No_string_is_empty`, `Placeholders_match_between_languages` |
+| REQ-090 | `e2e/tests/landing.spec.ts` › the landing plays the story and offers one action per role |
+| REQ-091 | `e2e/tests/roles.spec.ts` › the buyer view shows the count, one action and no organizer tools |
+| REQ-092 | `e2e/tests/roles.spec.ts` › the organizer view shows the grid, the figures and releases a crowd (also asserts available + held + sold = 48 as the panel shows it) |
+| REQ-093 | `e2e/tests/roles.spec.ts` › switching between buyer and organizer keeps the same drop; a buyer's purchase appears as a sold unit for the organizer |
+| REQ-094 | `e2e/tests/language.spec.ts` › defaults to English, switches to Spanish and remembers the choice; defaults to Spanish |
+| REQ-095 | `I18nParityTests.Spanish_and_English_define_exactly_the_same_keys`, `No_string_is_empty`, `Placeholders_match_between_languages`; at run time `e2e/tests/language.spec.ts` › every route renders in es / en with no missing keys or errors |
+| REQ-096 | `e2e/tests/landing.spec.ts` › reduced motion › the story does not animate and shows only its last caption |
 | REQ-097 | `DropTests.The_next_expiry_is_the_soonest_live_hold_and_null_when_none_is_live`; `DropFlowTests.A_drop_reports_when_its_next_hold_expires` |
 
 ## Installable app
@@ -105,6 +112,11 @@ Test suites:
 | Requirement | Test |
 | :--- | :--- |
 | REQ-100 | `PwaAssetsTests.The_manifest_declares_what_a_browser_needs_to_install_the_panel`, `The_manifest_has_192_and_512_icons_and_one_of_them_is_maskable`, `Every_icon_exists_and_is_a_png_of_the_declared_size`, `The_page_links_the_manifest_and_declares_its_colours_and_touch_icon` |
+| REQ-101 | `e2e/tests/offline.spec.ts` › offline, the shell opens from the cache and says it is offline; going offline mid-session disables purchases and the API is never faked |
+| REQ-102 | `e2e/tests/mobile.spec.ts` › every route does not scroll sideways at 360 px; the buyer page and the organizer view fit and have large touch targets; primary buttons reach 44 px on a touch screen |
+| REQ-103 | `e2e/tests/buyer-link.spec.ts` › the buyer link shows the buyer page alone and remembers the visitor; a buyer link to a drop that does not exist says so |
+| REQ-104 | `e2e/tests/buyer-link.spec.ts` › the QR code decodes to the buyer link; copy puts the buyer link on the clipboard |
+| REQ-105 | `e2e/tests/buyer-link.spec.ts` › the QR code decodes to the buyer link (decoded by `jsQR`, independent of the encoder); the encoder is `assets/js/qr.js`, with no dependency |
 | REQ-106 | `PwaAssetsTests.Every_precache_entry_points_at_a_file_that_exists`, `Every_static_asset_of_the_panel_is_precached`, `The_service_worker_never_handles_the_api_or_non_get_requests` |
 
 ## HTTP contract
@@ -128,17 +140,14 @@ Test suites:
 
 ## Gaps
 
-Every requirement declared in [10-requirements.md](10-requirements.md) is covered by an automated test passing in the Release suite.
+Every requirement declared in [10-requirements.md](10-requirements.md) is covered by an automated test:
+the .NET suite (`dotnet test`) or the browser suite (`e2e/`, CI job `Browser tests`).
 
-One known gap, deliberately outside that file: the visual behaviour of the panel in
-[specs/003-drop-experience](../specs/003-drop-experience/spec.md) (REQ-090 to REQ-094, REQ-096:
-landing story, role lenses, language selector, reduced motion). It was verified by hand in a browser
-against the real API and the in-browser engine, in both languages, with no console errors or missing
-translation keys; there is no browser-level test yet (task T-056).
+What is still not automated, and honestly so:
 
-A second one, from [specs/004-mobile-share](../specs/004-mobile-share/spec.md) (REQ-101 to REQ-105):
-the offline shell, the 360 px layout, the standalone buyer page and the QR code. Verified by hand
-against the real API with a phone profile and with the network switched off; the QR encoder's
-output was decoded by an independent decoder (`jsQR`, run outside the repository) for seven inputs
-from version 2 to 10, and a generated code on screen decoded back to its link. The same task T-056
-covers them.
+- **Installation on a physical phone and over HTTPS** (Android Chrome, iOS "Add to Home Screen").
+  The suite proves the manifest, the icons, the service worker and the offline shell; it cannot
+  press the install button of a real device (tasks T-066 and T-067, which need the owner).
+- **The QR encoder across every version.** The suite decodes the codes the panel actually shows
+  (a link of about 65 characters, version 5); seven inputs from version 2 to 10 were also decoded by `jsQR`
+  during development. A property test over many inputs is possible and not yet written.

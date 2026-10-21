@@ -64,5 +64,10 @@ artifacts/
 *.db-shm
 *.db-wal
 
+# Browser tests (e2e/): dependencies and run output
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+
 # Configuración local del editor
 .vscode/

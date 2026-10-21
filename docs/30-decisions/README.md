@@ -14,3 +14,4 @@ Records of significant architectural and design decisions for NainOrder.
 | [ADR-0008](ADR-0008-drops-with-expiring-holds.md) | Drops with expiring holds | Approved |
 | [ADR-0009](ADR-0009-sqlite-wal-mode.md) | SQLite in WAL mode | Proposed |
 | [ADR-0010](ADR-0010-service-worker-shell-cache.md) | Service worker that caches the shell, never the API | Proposed |
+| [ADR-0011](ADR-0011-browser-tests-with-playwright.md) | Browser tests with Playwright, outside the panel | Proposed |
