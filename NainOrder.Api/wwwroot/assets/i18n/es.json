@@ -1,5 +1,16 @@
 {
   "app.tagline": "Motor de drops",
+  "shell.install": "Instalar",
+  "shell.offline": "Sin conexión: puedes ver el panel, pero no comprar",
+  "share.title": "Enlace para compradores",
+  "share.scan": "Escanea para comprar",
+  "share.copy": "Copiar",
+  "share.copied": "Enlace copiado",
+  "share.share": "Compartir",
+  "share.localhost": "Los móviles no llegan a localhost: abre la app con la IP de tu red.",
+  "buyerpage.notFound": "Este drop ya no existe",
+  "buyerpage.home": "Ir al inicio",
+  "msg.offline": "Sin conexión",
   "app.loading": "Cargando NainOrder…",
 
   "nav.section": "Operación",

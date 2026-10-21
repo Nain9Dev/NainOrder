@@ -8,6 +8,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Mobile, install and share (`specs/004-mobile-share`, ADR-0010): the panel is an installable app
+  (manifest, icons, service worker that caches the shell and never the API), shows when it is
+  offline, and works at 360 px. An organizer gets a QR code, copy and share for the drop's buyer
+  link (`#/d/<id>`), which opens a buyer-only page on the audience's phones. The QR encoder is
+  in-repo, with no dependency. Use case documented in `docs/case-study.md`.
 - Drop experience (`specs/003-drop-experience`): an animated, wordless landing for the drop, a
   buyer view and an organizer view of the same drop, and a Spanish/English selector covering the
   whole panel (dictionaries in `assets/i18n`, parity enforced by `I18nParityTests`). Drops report
@@ -73,7 +78,10 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 - Panel: dashboard KPIs rendered `0` because the card helper read a misnamed property; the Architecture
   view printed its header button as raw markup; each navigation hid the first lines of a view under the
-  sticky top bar.
+  sticky top bar. Buttons that start `hidden` (active order, install) showed as empty squares in the
+  top bar because their `display` beat the `[hidden]` rule.
+- The client no longer falls back to the in-browser engine when the device is offline: it reports
+  "offline" instead of showing invented data.
 - An unknown route under `/api` returned `200` with the panel's HTML instead of `404` JSON, which
   broke any client expecting a JSON body.
 - A technical failure was reported as `400` with its message exposed, and was swallowed instead of

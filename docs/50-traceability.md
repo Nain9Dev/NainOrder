@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (116/116 tests)
+**Status:** Active · verified against a green run of `dotnet test NainOrder.slnx -c Release` (123/123 tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -17,6 +17,7 @@ Test suites:
 | `Api.OrderAggregateConcurrencyProbe` | Concurrency, aggregate | Multi-context concurrent aggregate mutations and optimistic concurrency conflict enforcement |
 | `Domain.DropTests` | Example-based + property-based | The drop aggregate with an explicit clock: holds, expiry, limits, the held-plus-sold invariant |
 | `Api.DropFlowTests` | Integration, concurrent | Drops over HTTP with a hand-moved clock, a 40-buyer crowd and UTC serialisation |
+| `Api.PwaAssetsTests` | Contract | Manifest, icons and service-worker precache list match the files served |
 | `Api.I18nParityTests` | Contract | Both panel languages define the same keys and placeholders |
 | `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
 | `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
@@ -99,6 +100,13 @@ Test suites:
 | REQ-095 | `I18nParityTests.Spanish_and_English_define_exactly_the_same_keys`, `No_string_is_empty`, `Placeholders_match_between_languages` |
 | REQ-097 | `DropTests.The_next_expiry_is_the_soonest_live_hold_and_null_when_none_is_live`; `DropFlowTests.A_drop_reports_when_its_next_hold_expires` |
 
+## Installable app
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-100 | `PwaAssetsTests.The_manifest_declares_what_a_browser_needs_to_install_the_panel`, `The_manifest_has_192_and_512_icons_and_one_of_them_is_maskable`, `Every_icon_exists_and_is_a_png_of_the_declared_size`, `The_page_links_the_manifest_and_declares_its_colours_and_touch_icon` |
+| REQ-106 | `PwaAssetsTests.Every_precache_entry_points_at_a_file_that_exists`, `Every_static_asset_of_the_panel_is_precached`, `The_service_worker_never_handles_the_api_or_non_get_requests` |
+
 ## HTTP contract
 
 | Requirement | Test |
@@ -127,3 +135,10 @@ One known gap, deliberately outside that file: the visual behaviour of the panel
 landing story, role lenses, language selector, reduced motion). It was verified by hand in a browser
 against the real API and the in-browser engine, in both languages, with no console errors or missing
 translation keys; there is no browser-level test yet (task T-056).
+
+A second one, from [specs/004-mobile-share](../specs/004-mobile-share/spec.md) (REQ-101 to REQ-105):
+the offline shell, the 360 px layout, the standalone buyer page and the QR code. Verified by hand
+against the real API with a phone profile and with the network switched off; the QR encoder's
+output was decoded by an independent decoder (`jsQR`, run outside the repository) for seven inputs
+from version 2 to 10, and a generated code on screen decoded back to its link. The same task T-056
+covers them.

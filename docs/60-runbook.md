@@ -37,6 +37,23 @@ docker run -p 8080:8080 nainorder
 The image runs as a non-root user (`uid 1654`) and writes the database to `/app/data`. Override the
 location with `ConnectionStrings__DefaultConnection`.
 
+## Reach it from phones
+
+The buyer link and its QR code encode the address the panel was opened with, so open the panel with
+an address phones can reach, not `localhost`:
+
+```bash
+cd NainOrder.Api && dotnet run --urls http://0.0.0.0:8170
+```
+
+Then open `http://<computer-IP>:8170` on the laptop. Allow the port in the firewall if Windows asks.
+**Installing the panel as an app and the offline cache need a secure origin** (HTTPS, or
+`localhost`): on plain HTTP over the network the buyer page works but is not installable. Put any
+HTTPS reverse proxy or tunnel in front for that ([ADR-0010](30-decisions/ADR-0010-service-worker-shell-cache.md)).
+The service worker never caches `/api`, so an offline phone sees the interface but no invented
+units. After a deploy, static files refresh in the background: a returning visitor may see the
+previous version once.
+
 ## Configuration
 
 | Setting | Environment variable | Default |

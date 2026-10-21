@@ -1,5 +1,16 @@
 {
   "app.tagline": "Drop engine",
+  "shell.install": "Install",
+  "shell.offline": "Offline: you can view the panel, but not buy",
+  "share.title": "Buyer link",
+  "share.scan": "Scan to buy",
+  "share.copy": "Copy",
+  "share.copied": "Link copied",
+  "share.share": "Share",
+  "share.localhost": "Phones cannot reach localhost: open the app with your network IP.",
+  "buyerpage.notFound": "This drop no longer exists",
+  "buyerpage.home": "Go to the start",
+  "msg.offline": "You are offline",
   "app.loading": "Loading NainOrder…",
 
   "nav.section": "Operations",

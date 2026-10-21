@@ -14,7 +14,7 @@ import { catalogView } from "./views/catalog.js";
 import { ordersView } from "./views/orders.js";
 import { architectureView } from "./views/architecture.js";
 import { raceView } from "./views/race.js";
-import { dropView } from "./views/drop.js";
+import { dropView, buyerLinkView } from "./views/drop.js";
 
 const NAV = [
   { path: "/drop", labelKey: "nav.drop", icon: "ticket", view: dropView },
@@ -24,6 +24,49 @@ const NAV = [
   { path: "/carrera", labelKey: "nav.race", icon: "race", view: raceView },
   { path: "/arquitectura", labelKey: "nav.arch", icon: "architecture", view: architectureView }
 ];
+
+/* --------------------------------------------------------------------------
+   Installable app and offline state (ADR-0010)
+   -------------------------------------------------------------------------- */
+let installPrompt = null;
+
+const registerServiceWorker = () => {
+  // Service workers need a secure context (HTTPS or localhost); elsewhere the panel still works,
+  // it just cannot be installed or opened offline.
+  if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+  navigator.serviceWorker.register("./sw.js").catch(() => { /* Not installable here: no harm done. */ });
+};
+
+const watchInstall = () => {
+  const button = $("[data-action='install']");
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    button.hidden = false;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    button.hidden = true;
+  });
+
+  delegate(document.body, "click", "[data-action='install']", async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    button.hidden = true;
+  });
+};
+
+const paintOffline = () => {
+  const offline = navigator.onLine === false;
+  document.documentElement.toggleAttribute("data-offline", offline);
+
+  const notice = $("[data-offline-notice]");
+  if (notice) notice.hidden = !offline;
+};
 
 /* --------------------------------------------------------------------------
    Theme
@@ -137,6 +180,9 @@ const shell = () => html`
 
         <div class="topbar__actions">
           <button class="btn btn--sm" type="button" data-active-order hidden></button>
+          <button class="btn btn--sm" type="button" data-action="install" hidden>
+            ${raw(icon("install", { size: 14 }))} <span data-i18n="shell.install"></span>
+          </button>
           ${raw(languageSwitch())}
           <button class="btn btn--ghost btn--icon" type="button" data-action="palette"
                   data-i18n-attr="aria-label:shell.palette">${raw(icon("command", { size: 16 }))}</button>
@@ -144,6 +190,10 @@ const shell = () => html`
                   data-i18n-attr="aria-label:shell.theme"></button>
         </div>
       </header>
+
+      <div class="offline-notice" data-offline-notice role="status" hidden>
+        ${raw(icon("offline", { size: 15 }))} <span data-i18n="shell.offline"></span>
+      </div>
 
       ${raw(demoBanner())}
 
@@ -392,6 +442,8 @@ const boot = async () => {
   let currentView = null;
 
   NAV.forEach((item) => defineRoute(item.path, item.view));
+  // The buyer link, opened from a QR code: the buyer page alone, with no navigation around it.
+  defineRoute("/d/*", buyerLinkView);
 
   const paintTitles = () => {
     if (!currentView) return;
@@ -403,6 +455,7 @@ const boot = async () => {
   onRouteChange((path, view) => {
     currentView = view;
     paintTitles();
+    document.documentElement.toggleAttribute("data-standalone", Boolean(view.standalone));
 
     document.querySelectorAll("[data-nav]").forEach((link) => {
       if (link.dataset.nav === path) link.setAttribute("aria-current", "page");
@@ -437,6 +490,12 @@ const boot = async () => {
   subscribe(renderActiveOrder);
   renderActiveOrder();
   monitorHealth();
+
+  watchInstall();
+  paintOffline();
+  window.addEventListener("online", paintOffline);
+  window.addEventListener("offline", paintOffline);
+  registerServiceWorker();
 
   const rerender = startRouter(outlet);
 

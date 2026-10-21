@@ -144,7 +144,11 @@ async function request(method, path, { body, query, signal, headers } = {}) {
       body: body ? JSON.stringify(body) : undefined
     });
   } catch (networkError) {
-    // Backend offline: conmuta con gracia al motor de dominio en memoria
+    // The device itself has no network (an installed app opened offline): answer honestly. Falling
+    // back to the in-browser engine here would show invented units to someone about to buy.
+    if (navigator.onLine === false) throw new ApiError(0, { title: "Offline", code: "offline" });
+
+    // Backend unreachable but the device is online: switch gracefully to the in-browser engine.
     isStaticHost = true;
     return request(method, path, { body, query, signal, headers });
   }

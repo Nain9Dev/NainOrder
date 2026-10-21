@@ -11,6 +11,7 @@ import { toast, toastError } from "../toast.js";
 import { withBusy } from "../overlay.js";
 import { fmtMoney, fmtNumber } from "../format.js";
 import { t } from "../i18n.js";
+import { qrSvg } from "../qr.js";
 
 const LAST_DROP_KEY = "nainorder.drop";
 const ROLE_KEY = "nainorder.role";
@@ -26,7 +27,8 @@ const MESSAGES = {
   buyer_limit_reached: "msg.buyer_limit_reached",
   insufficient_stock: "msg.insufficient_stock",
   concurrency_conflict: "msg.concurrency_conflict",
-  hold_expired: "msg.hold_expired"
+  hold_expired: "msg.hold_expired",
+  offline: "msg.offline"
 };
 
 const store = {
@@ -138,7 +140,7 @@ const landing = (recent) => html`
 /* --------------------------------------------------------------------------
    The open drop
    -------------------------------------------------------------------------- */
-const stage = (role) => html`
+const stage = (role, standalone) => html`
   <article class="card drop" data-stage>
     <header class="drop__head">
       <div>
@@ -149,10 +151,12 @@ const stage = (role) => html`
         <span class="badge" data-badge></span>
         <span class="drop__clock numeric" data-clock></span>
       </div>
-      <div class="seg" role="group" aria-label="${t("role.switch")}">
-        <button class="seg__btn" type="button" data-role="buyer" aria-pressed="${role === "buyer"}">${t("role.buyer")}</button>
-        <button class="seg__btn" type="button" data-role="organizer" aria-pressed="${role === "organizer"}">${t("role.organizer")}</button>
-      </div>
+      ${raw(standalone
+        ? ""
+        : html`<div class="seg" role="group" aria-label="${t("role.switch")}">
+            <button class="seg__btn" type="button" data-role="buyer" aria-pressed="${role === "buyer"}">${t("role.buyer")}</button>
+            <button class="seg__btn" type="button" data-role="organizer" aria-pressed="${role === "organizer"}">${t("role.organizer")}</button>
+          </div>`)}
     </header>
 
     <div data-lens></div>
@@ -179,8 +183,14 @@ const buyerLens = () => html`
   </div>
 `;
 
-const organizerLens = () => html`
+/** The buyer link of a drop: what the QR code encodes. It works from any device that reaches this origin. */
+const buyerLink = (id) => `${window.location.origin}${window.location.pathname}#/d/${id}`;
+
+const isLocalHost = () => ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+
+const organizerLens = (link) => html`
   <div class="organizer">
+   <div class="organizer__main">
     <div class="drop__grid" data-grid aria-label="${t("drop.grid")}"></div>
 
     <div class="race__stats" data-stats></div>
@@ -211,6 +221,22 @@ const organizerLens = () => html`
       <li><i data-cell="held"></i> ${t("drop.legend.held")}</li>
       <li><i data-cell="sold"></i> ${t("drop.legend.sold")}</li>
     </ul>
+   </div>
+
+   <aside class="organizer__side">
+    <div class="share">
+      <div class="share__qr" data-qr role="img" aria-label="${t("share.scan")}"></div>
+      <div class="share__body">
+        <p class="organizer__label">${t("share.title")}</p>
+        <input class="input share__link" type="text" readonly value="${link}" data-link aria-label="${t("share.title")}">
+        <div class="drop__actions">
+          <button class="btn btn--sm" type="button" data-action="copy">${raw(icon("copy", { size: 14 }))} ${t("share.copy")}</button>
+          <button class="btn btn--sm" type="button" data-action="share" hidden>${raw(icon("external", { size: 14 }))} ${t("share.share")}</button>
+        </div>
+        ${raw(isLocalHost() ? html`<p class="share__hint">${t("share.localhost")}</p>` : "")}
+      </div>
+    </div>
+   </aside>
   </div>
 `;
 
@@ -253,7 +279,11 @@ export const dropView = {
     this._poll = this._tick = null;
   },
 
-  async render(outlet) {
+  /**
+   * `standalone` is the buyer link (`#/d/<id>`): only the buyer page, no landing, no role switch.
+   * That is what a phone shows after scanning the organizer's QR code.
+   */
+  async render(outlet, { params = {}, standalone = false } = {}) {
     this.destroy();
 
     // The top bar already names the view; repeating it here would only add text.
@@ -288,15 +318,24 @@ export const dropView = {
       try {
         drop = await api.drops.get(id);
       } catch {
+        if (standalone) {
+          body.innerHTML = html`
+            <div class="empty">
+              <span class="empty__icon">${raw(icon("alert", { size: 22 }))}</span>
+              <p class="empty__title">${t("buyerpage.notFound")}</p>
+              <a class="btn" href="#/drop">${t("buyerpage.home")}</a>
+            </div>`;
+          return;
+        }
         await showLanding();
         return;
       }
 
       this.destroy();
-      store.set(LAST_DROP_KEY, id);
+      if (!standalone) store.set(LAST_DROP_KEY, id);
 
-      let role = preferredRole ?? store.get(ROLE_KEY) ?? "buyer";
-      body.innerHTML = stage(role);
+      let role = standalone ? "buyer" : preferredRole ?? store.get(ROLE_KEY) ?? "buyer";
+      body.innerHTML = stage(role, standalone);
       const stageNode = $("[data-stage]", body);
       const lens = $("[data-lens]", stageNode);
 
@@ -363,10 +402,18 @@ export const dropView = {
       };
 
       const showLens = () => {
-        lens.innerHTML = role === "buyer" ? buyerLens() : organizerLens();
+        const link = buyerLink(id);
+        lens.innerHTML = role === "buyer" ? buyerLens() : organizerLens(link);
         stageNode.querySelectorAll("[data-role]").forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.role === role));
         });
+
+        if (role === "organizer") {
+          // Generated here, with no library and no request: the link never leaves the browser.
+          $("[data-qr]", lens).innerHTML = qrSvg(link, { margin: 2 });
+          $('[data-action="share"]', lens).hidden = typeof navigator.share !== "function";
+        }
+
         paint();
       };
 
@@ -455,6 +502,23 @@ export const dropView = {
       });
 
       delegate(stageNode, "click", '[data-action="reset"]', showLanding);
+
+      delegate(stageNode, "click", '[data-action="copy"]', async () => {
+        const link = buyerLink(id);
+        try {
+          await navigator.clipboard.writeText(link);
+        } catch {
+          // Clipboard access can be refused (insecure context): select the field so Ctrl+C works.
+          $("[data-link]", lens)?.select();
+        }
+        toast({ title: t("share.copied"), variant: "success" });
+      });
+
+      delegate(stageNode, "click", '[data-action="share"]', () => {
+        navigator.share({ title: current.productName, url: buyerLink(id) }).catch(() => {
+          /* The visitor closed the share sheet: nothing to report. */
+        });
+      });
     };
 
     /** Starts a drop for the chosen role with sensible defaults: nothing to configure. */
@@ -476,8 +540,28 @@ export const dropView = {
     delegate(root, "click", "[data-start]", (event, button) => startAs(button.dataset.start, button));
     delegate(root, "click", "[data-open]", (event, node) => openDrop(node.dataset.open));
 
+    if (standalone) {
+      await openDrop(params.id);
+      return;
+    }
+
     const last = store.get(LAST_DROP_KEY);
     if (last) await openDrop(last);
     else await showLanding();
+  }
+};
+
+/** The buyer link (`#/d/<id>`): the buyer page alone, for the phone that scanned the QR code. */
+export const buyerLinkView = {
+  standalone: true,
+  get title() { return t("drop.title"); },
+  get subtitle() { return ""; },
+
+  destroy() {
+    dropView.destroy();
+  },
+
+  render(outlet, context) {
+    return dropView.render(outlet, { ...context, standalone: true });
   }
 };

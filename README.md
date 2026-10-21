@@ -11,7 +11,7 @@
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-116%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-123%20passing-2ea44f)
 ![Client dependencies](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
 [![Live demo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
@@ -26,6 +26,20 @@
 > **48 units. 40 buyers released at once.** Each unit is *available*, *held* for 30 seconds, or *sold*.
 > Hold it and don't confirm: it goes back to the crowd. Try it as a **buyer** or an **organizer**, in
 > Spanish or English: open the app and press **Release 40 buyers**.
+
+---
+
+## Real use: a pop-up drop in five minutes
+
+The organizer starts a drop on a laptop and shows a **QR code**. The audience scans it and lands on a
+buyer page — one button, one countdown, nothing to install or sign up for. Installable as an app,
+works on a phone, and says so when it is offline.
+
+<p align="center">
+  <img src="docs/assets/phone-buyer.png" alt="Buyer page on a phone: 47 units available, one button, a 30 second hold" width="26%">
+</p>
+
+[Step by step, with what each guarantee means for the seller →](docs/case-study.md)
 
 ---
 
@@ -97,7 +111,7 @@ Open <http://localhost:8170> → **Try as a buyer** or **Try as an organizer**. 
 and `/health`. No database to install: SQLite creates itself.
 
 ```bash
-dotnet test NainOrder.slnx -c Release          # 116 tests
+dotnet test NainOrder.slnx -c Release          # 123 tests
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 
