@@ -8,7 +8,7 @@
 | T-053 | Buyer and organizer lenses | `[A]` | ✅ Verified in a browser on the real API (REQ-091 to REQ-093, REQ-097) |
 | T-054 | Translate Dashboard, Catalogue, Orders and the order panel | `[A]` | ✅ Every route in both languages: no console errors, no missing keys |
 | T-055 | README capture (animated) | `[A]` | ✅ `docs/assets/drop-story.gif` and a live-drop capture |
-| T-056 | Browser-level tests for the visual requirements | `[M]` | Playwright decision (a dev dependency) approved by the owner; REQ-090 to REQ-094, REQ-096 move into `docs/10-requirements.md` |
+| T-056 | Browser-level tests for the visual requirements | `[M]` | ✅ `e2e/` with Playwright (ADR-0011, Proposed); REQ-090 to REQ-094, REQ-096 and REQ-101 to REQ-105 are in `docs/10-requirements.md` with their tests |
 | T-057 | Animated request map in the Architecture view (a purchase travelling through the layers) | `[A]` | The four layers light up in order for a real request |
 
 ## Handoff

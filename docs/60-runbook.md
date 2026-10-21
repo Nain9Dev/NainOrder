@@ -24,8 +24,16 @@ dotnet build NainOrder.slnx -c Release && dotnet test NainOrder.slnx -c Release
 ```
 
 `TreatWarningsAsErrors` is on in all four projects, so a new warning fails the build. Changes to
-`NainOrder.Api/wwwroot` have no build step and must be checked in a browser against a running
-instance.
+`NainOrder.Api/wwwroot` have no build step; the browser suite checks them against the real
+application:
+
+```bash
+cd e2e && npm ci && npx playwright install chromium && npx playwright test
+```
+
+Playwright starts the API itself on port 8180 with a throwaway database. To reuse an installed
+browser, set `PW_CHANNEL=msedge` (or `chrome`). On a failure, `npx playwright show-trace` opens the
+recorded trace ([ADR-0011](30-decisions/ADR-0011-browser-tests-with-playwright.md)).
 
 ## Container
 
