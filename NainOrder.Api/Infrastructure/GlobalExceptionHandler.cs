@@ -54,6 +54,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         };
 
         problemDetails.Extensions["code"] = code;
+        problemDetails.Extensions["layer"] = LayerOf(exception);
 
         foreach (var (key, value) in DescribeContext(exception))
             problemDetails.Extensions[key] = value;
@@ -89,6 +90,20 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         OperationCanceledException => (StatusCodesExtra.ClientClosedRequest, "request_cancelled", "Request cancelled"),
 
         _ => (StatusCodes.Status500InternalServerError, "internal_error", "Internal server error")
+    };
+
+    /// <summary>
+    /// The layer whose rule decided the rejection (REQ-111). A concurrency conflict is raised by
+    /// the unit of work when the database refuses the write, so it belongs to Infrastructure
+    /// even though it reaches here as an application exception.
+    /// </summary>
+    private static string LayerOf(Exception exception) => exception switch
+    {
+        DomainException => "domain",
+        ConflictException { Code: "concurrency_conflict" } => "infrastructure",
+        AppException => "application",
+        OperationCanceledException => "api",
+        _ => "infrastructure"
     };
 
     /// <summary>Expone los datos accionables del fallo para que el cliente pueda reaccionar sin parsear texto.</summary>

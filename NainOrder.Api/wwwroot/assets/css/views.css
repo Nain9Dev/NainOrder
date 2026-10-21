@@ -1301,6 +1301,85 @@
   color: var(--warning);
 }
 
+/* Request map: a request crossing the layers, with the server's own timings */
+.reqmap__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.reqmap__node rect {
+  fill: var(--surface-2);
+  stroke: var(--border-default);
+  stroke-width: 1.5;
+  transition: fill var(--duration-base) var(--ease), stroke var(--duration-base) var(--ease);
+}
+
+.reqmap__node[data-lit="true"] rect {
+  fill: color-mix(in srgb, var(--node-color) 22%, var(--surface-2));
+  stroke: var(--node-color);
+}
+
+.reqmap__node[data-rejected="true"] rect {
+  fill: color-mix(in srgb, var(--danger) 24%, var(--surface-2));
+  stroke: var(--danger);
+}
+
+.reqmap__label,
+.reqmap__metric,
+.reqmap__caption {
+  text-anchor: middle;
+  fill: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.reqmap__metric {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--text-secondary);
+}
+
+.reqmap__caption {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--text-muted);
+}
+
+.reqmap__edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.reqmap__dot {
+  fill: var(--brand-3);
+  filter: drop-shadow(0 0 6px var(--brand-3));
+  opacity: 0;
+}
+
+.reqmap[data-state="ok"] .reqmap__dot,
+.reqmap[data-state="rejected"] .reqmap__dot {
+  opacity: 1;
+}
+
+.reqmap[data-state="rejected"] .reqmap__dot {
+  fill: var(--danger);
+  filter: drop-shadow(0 0 6px var(--danger));
+}
+
+.reqmap__legend {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* Language switch in the top bar */
 .lang {
   display: inline-flex;

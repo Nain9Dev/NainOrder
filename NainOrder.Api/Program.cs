@@ -1,5 +1,7 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,18 @@ builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddHostedService<HoldExpirySweeper>();
 
 builder.Services.AddControllers();
+
+// Model validation failures must honour the error contract too (REQ-050): the controllers'
+// [Produces("application/json")] would otherwise label a problem document as plain JSON.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        var problem = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState);
+        // A JsonResult, not an ObjectResult: the [Produces] filter rewrites an ObjectResult's content type.
+        return new JsonResult(problem) { StatusCode = StatusCodes.Status400BadRequest, ContentType = "application/problem+json" };
+    });
+
 builder.Services.AddMemoryCache();
 
 // Errores uniformes RFC 7807 en toda la superficie de la API.
@@ -31,6 +45,10 @@ builder.Services.AddProblemDetails(options =>
     {
         context.ProblemDetails.Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
         context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+
+        // Problems the exception handler never sees (model validation, unknown routes) were
+        // decided by the API layer itself; the handler names the layer for everything else.
+        context.ProblemDetails.Extensions.TryAdd("layer", "api");
     });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -103,6 +121,8 @@ var app = builder.Build();
 await InitializeDatabaseAsync(app);
 
 app.UseForwardedHeaders();
+// Outermost, so the `app` segment covers the whole pipeline, rejections included.
+app.UseMiddleware<ServerTimingMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseResponseCompression();
@@ -170,6 +190,7 @@ static IResult ApiEndpointNotFound(HttpContext context) => Results.Problem(
     extensions: new Dictionary<string, object?>
     {
         ["code"] = "endpoint_not_found",
+        ["layer"] = "api",
         ["traceId"] = context.TraceIdentifier
     });
 

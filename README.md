@@ -11,7 +11,7 @@
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-123%20.NET%20%2B%2025%20browser-2ea44f)
+![Tests](https://img.shields.io/badge/tests-130%20.NET%20%2B%2029%20browser-2ea44f)
 ![Client dependencies](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
 [![Live demo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
@@ -66,14 +66,27 @@ flowchart LR
 
 ---
 
-## Architecture
+## Architecture, live
 
+<p align="center">
+  <img src="docs/assets/request-map.png" alt="Request map: a request crossing Api, Application, Domain and Infrastructure, with the server's measured time and database time" width="92%">
+</p>
+
+<p align="center">
+  <img src="docs/assets/request-map-rejected.png" alt="The same map for a rejected request: the dot stops at Application, which the server named as the layer that said no" width="92%">
+</p>
+
+Every request the panel makes crosses the four layers on screen. Nothing is guessed: the server sends
+its own timings (`Server-Timing`) and, for a rejection, the **layer that said no** (`layer` in the
+problem document). The order of the layers is the dependency rule, and `NetArchTest` fails the build
+if `Domain` references anything or `Application` learns about EF Core.
+
+<details>
+<summary>The four layers, static</summary>
 <p align="center">
   <img src="docs/assets/architecture.svg" alt="Four nested layers: Api, Infrastructure, Application and Domain. Dependencies point inwards." width="92%">
 </p>
-
-The rule is **enforced, not declared**: `NetArchTest` fails the build if `Domain` references anything or
-`Application` learns about EF Core.
+</details>
 
 <p align="center">
   <img src="docs/assets/panel-race.png" alt="Stock race: 24 buyers compete for 5 units; 5 win, 19 are rejected" width="46%">
@@ -94,7 +107,8 @@ The panel is plain ES modules served by the API itself: no npm, no build step, n
 | Stock is never oversold, even in a race | `StockRaceTests`, `ConcurrencyTests` |
 | Two writers on one order never lose an update | `OrderAggregateConcurrencyProbe` |
 | Domain has zero dependencies | `CleanArchitectureTests` |
-| The QR code is the buyer link, the shell works offline, the phone layout fits | `e2e/` — 25 browser tests (Playwright) against the real app, QR decoded by an independent library |
+| The QR code is the buyer link, the shell works offline, the phone layout fits | `e2e/` — 29 browser tests (Playwright) against the real app, QR decoded by an independent library |
+| The request map shows measured figures, never estimates | `RequestObservabilityTests`: `Server-Timing` and the `layer` of every rejection come from the server |
 | The shipped container works | CI builds the image and probes it |
 
 Every requirement maps to a test in [`docs/50-traceability.md`](docs/50-traceability.md).
@@ -112,8 +126,8 @@ Open <http://localhost:8170> → **Try as a buyer** or **Try as an organizer**. 
 and `/health`. No database to install: SQLite creates itself.
 
 ```bash
-dotnet test NainOrder.slnx -c Release          # 123 tests
-cd e2e && npm ci && npx playwright test        # 25 browser tests (starts the app itself)
+dotnet test NainOrder.slnx -c Release          # 130 tests
+cd e2e && npm ci && npx playwright test        # 29 browser tests (starts the app itself)
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 

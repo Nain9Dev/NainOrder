@@ -8,6 +8,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Live request map (`specs/005-request-map`): the Architecture view animates every request across
+  the four layers with the server's own figures. Every response now carries `Server-Timing`
+  (`app`, and `db` with the command count, measured by an EF Core interceptor and by the read
+  side's raw commands), and every problem document names the `layer` that decided the rejection.
+  REQ-110 to REQ-113.
 - Browser tests (`e2e/`, ADR-0011): 25 Playwright tests against the real application cover the
   landing, the buyer and organizer views, the language selector, the buyer link and its QR code
   (decoded by an independent library), the offline shell and the 360 px layout. They run in their own
@@ -81,6 +86,9 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Fixed
 
+- Model-validation failures (`400`) were labelled `application/json` instead of
+  `application/problem+json`, against REQ-050: the controllers' `[Produces]` filter rewrote the
+  content type. They now go out as a problem document like every other failure.
 - Panel: dashboard KPIs rendered `0` because the card helper read a misnamed property; the Architecture
   view printed its header button as raw markup; each navigation hid the first lines of a view under the
   sticky top bar. Buttons that start `hidden` (active order, install) showed as empty squares in the

@@ -1,10 +1,12 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NainOrder.Application.DTOs;
 using NainOrder.Application.Interfaces;
 using NainOrder.Domain.Enums;
 using NainOrder.Infrastructure.Persistence.Converters;
+using NainOrder.Infrastructure.Persistence.Diagnostics;
 
 namespace NainOrder.Infrastructure.Persistence.Repositories;
 
@@ -24,8 +26,25 @@ public class AnalyticsRepository : IAnalyticsRepository
     private const int TopProductsLimit = 5;
 
     private readonly NainOrderDbContext _context;
+    private readonly RequestDatabaseTiming _timing;
 
-    public AnalyticsRepository(NainOrderDbContext context) => _context = context;
+    public AnalyticsRepository(NainOrderDbContext context, RequestDatabaseTiming timing)
+    {
+        _context = context;
+        _timing = timing;
+    }
+
+    /// <summary>
+    /// These commands run on ADO.NET directly and never pass through EF Core's interceptors,
+    /// so the request's database time is recorded here, or the read side would look free.
+    /// </summary>
+    private async Task<DbDataReader> ExecuteTimedReaderAsync(DbCommand command, CancellationToken cancellationToken)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var reader = await command.ExecuteReaderAsync(cancellationToken);
+        _timing.Record(Stopwatch.GetElapsedTime(started));
+        return reader;
+    }
 
     public async Task<DashboardStatsDto> GetDashboardStatsAsync(
         int timelineDays, CancellationToken cancellationToken = default)
@@ -78,7 +97,7 @@ public class AnalyticsRepository : IAnalyticsRepository
         }
     }
 
-    private static async Task<IReadOnlyList<StatusBreakdownDto>> ReadStatusBreakdownAsync(
+    private async Task<IReadOnlyList<StatusBreakdownDto>> ReadStatusBreakdownAsync(
         DbConnection connection, CancellationToken cancellationToken)
     {
         const string sql = """
@@ -90,7 +109,7 @@ public class AnalyticsRepository : IAnalyticsRepository
         var byStatus = new Dictionary<OrderStatus, (int Count, long Cents)>();
 
         await using var command = CreateCommand(connection, sql);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using var reader = await ExecuteTimedReaderAsync(command, cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
@@ -109,7 +128,7 @@ public class AnalyticsRepository : IAnalyticsRepository
             .ToList();
     }
 
-    private static async Task<(int Customers, int Products, int StockUnits, int LowStock)> ReadCatalogTotalsAsync(
+    private async Task<(int Customers, int Products, int StockUnits, int LowStock)> ReadCatalogTotalsAsync(
         DbConnection connection, CancellationToken cancellationToken)
     {
         var sql = $"""
@@ -121,14 +140,14 @@ public class AnalyticsRepository : IAnalyticsRepository
             """;
 
         await using var command = CreateCommand(connection, sql);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using var reader = await ExecuteTimedReaderAsync(command, cancellationToken);
 
         if (!await reader.ReadAsync(cancellationToken)) return (0, 0, 0, 0);
 
         return (reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt32(3));
     }
 
-    private static async Task<IReadOnlyList<RevenuePointDto>> ReadRevenueTimelineAsync(
+    private async Task<IReadOnlyList<RevenuePointDto>> ReadRevenueTimelineAsync(
         DbConnection connection, int timelineDays, CancellationToken cancellationToken)
     {
         var days = Math.Clamp(timelineDays, 1, 90);
@@ -152,7 +171,7 @@ public class AnalyticsRepository : IAnalyticsRepository
         await using var command = CreateCommand(connection, sql);
         AddParameter(command, "$from", from.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using var reader = await ExecuteTimedReaderAsync(command, cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
             if (DateOnly.TryParse(reader.GetString(0), out var day))
@@ -170,7 +189,7 @@ public class AnalyticsRepository : IAnalyticsRepository
             .ToList();
     }
 
-    private static async Task<IReadOnlyList<TopProductDto>> ReadTopProductsAsync(
+    private async Task<IReadOnlyList<TopProductDto>> ReadTopProductsAsync(
         DbConnection connection, CancellationToken cancellationToken)
     {
         var sql = $"""
@@ -190,7 +209,7 @@ public class AnalyticsRepository : IAnalyticsRepository
         var results = new List<TopProductDto>();
 
         await using var command = CreateCommand(connection, sql);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using var reader = await ExecuteTimedReaderAsync(command, cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
