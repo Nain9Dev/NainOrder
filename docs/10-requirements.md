@@ -112,6 +112,18 @@ verified in a real browser by `e2e/`; the QR code is decoded by an independent l
 | REQ-105 | The QR code shall be generated in the browser without any third-party library or service, and shall encode the drop's buyer link exactly. |
 | REQ-106 | The service worker's precache list shall name every static asset of the panel and no file that does not exist, and the service worker shall never handle `/api` or a non-GET request. |
 
+## Live request map
+
+From [specs/005-request-map](../specs/005-request-map/spec.md). The map draws only what the server
+states; the server side is verified by `RequestObservabilityTests`, the panel side by `e2e/`.
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-110 | Every API response shall carry a `Server-Timing` header with `app;dur=<ms>` measured for the whole request and, when the database was used, `db;dur=<ms>` summed from the real duration of every command the request executed, with the command count in its description. |
+| REQ-111 | Every `application/problem+json` response shall carry a `layer` extension naming where the rejection was decided: `domain` for a domain rule, `application` for a use-case rule, `infrastructure` for a concurrency conflict detected on write, `api` for validation, routing and rate limiting. |
+| REQ-112 | When the panel completes a request against the API, the Architecture view shall animate it across the layers in dependency order and show the server's `app` and `db` times; when the response is a rejection, the animation shall stop at the layer the server named and show the code. |
+| REQ-113 | Where the panel runs on its in-browser engine, the map shall show a single "browser engine" node and shall not pretend the request crossed the server's layers. |
+
 ## HTTP contract
 
 | ID | Requirement |

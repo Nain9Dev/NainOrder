@@ -1,6 +1,6 @@
 # Traceability
 
-**Status:** Active · verified against green runs of `dotnet test NainOrder.slnx -c Release` (123/123 tests) and `npx playwright test` in `e2e/` (25/25 browser tests)
+**Status:** Active · verified against green runs of `dotnet test NainOrder.slnx -c Release` (130/130 tests) and `npx playwright test` in `e2e/` (29/29 browser tests)
 
 Every requirement in [10-requirements.md](10-requirements.md) and the test that demonstrates it.
 A requirement with no test is not done, whatever the code says.
@@ -19,6 +19,7 @@ Test suites:
 | `Api.DropFlowTests` | Integration, concurrent | Drops over HTTP with a hand-moved clock, a 40-buyer crowd and UTC serialisation |
 | `e2e/tests/*.spec.ts` | Browser (Playwright), real application | Landing, roles, language, buyer link and QR, offline shell, 360 px layout |
 | `Api.PwaAssetsTests` | Contract | Manifest, icons and service-worker precache list match the files served |
+| `Api.RequestObservabilityTests` | Integration over HTTP | `Server-Timing` and the `layer` of every rejection: the facts the request map draws |
 | `Api.I18nParityTests` | Contract | Both panel languages define the same keys and placeholders |
 | `Api.StockRaceTests` | Integration, concurrent | The on-demand race: many buyers, few units, verdict from persisted stock |
 | `Api.GlobalExceptionHandlerTests` | Contract/Unit | RFC 7807 error translation and production 500 detail sanitization |
@@ -118,6 +119,15 @@ Test suites:
 | REQ-104 | `e2e/tests/buyer-link.spec.ts` › the QR code decodes to the buyer link; copy puts the buyer link on the clipboard |
 | REQ-105 | `e2e/tests/buyer-link.spec.ts` › the QR code decodes to the buyer link (decoded by `jsQR`, independent of the encoder); the encoder is `assets/js/qr.js`, with no dependency |
 | REQ-106 | `PwaAssetsTests.Every_precache_entry_points_at_a_file_that_exists`, `Every_static_asset_of_the_panel_is_precached`, `The_service_worker_never_handles_the_api_or_non_get_requests` |
+
+## Live request map
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-110 | `RequestObservabilityTests.A_catalogue_read_reports_the_whole_request_and_its_database_time`, `The_read_side_that_runs_raw_sql_is_timed_too`, `A_read_that_never_touches_the_database_reports_no_db_segment` |
+| REQ-111 | `RequestObservabilityTests.A_domain_rule_names_the_domain_layer`, `A_missing_resource_names_the_application_layer`, `A_validation_failure_names_the_api_layer`, `An_unknown_route_names_the_api_layer` |
+| REQ-112 | `e2e/tests/architecture.spec.ts` › a request crosses the map and shows the server's timings; a rejection stops at the layer the server named; a domain rule shows as rejected in Domain |
+| REQ-113 | `e2e/tests/architecture.spec.ts` › on the in-browser engine the map shows a single node |
 
 ## HTTP contract
 
