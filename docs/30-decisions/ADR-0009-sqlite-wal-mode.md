@@ -1,6 +1,6 @@
 # ADR-0009 — SQLite in WAL mode
 
-**Status:** Proposed
+**Status:** Approved (2026-10-21, by the owner delegating the decision to the agent's best judgement)
 
 ## Context
 

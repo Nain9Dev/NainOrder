@@ -30,3 +30,10 @@ tasks:
     desc: "Generate strict TypeScript client SDK from OpenAPI specification"
     cmds:
       - node scripts/generate-client.mjs
+
+  e2e:
+    desc: "Run the browser tests (starts the application itself; set PW_CHANNEL=msedge to reuse an installed browser)"
+    dir: e2e
+    cmds:
+      - npm ci
+      - npx playwright test

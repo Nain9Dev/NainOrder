@@ -82,24 +82,34 @@ enters this table when it is implemented and tested.
 
 ## Drop experience
 
-From [specs/003-drop-experience](../specs/003-drop-experience/spec.md). The visual requirements
-(REQ-090 to REQ-094, REQ-096) live in that spec until browser-level tests exist; only what is
-verified by an automated test is listed here.
+From [specs/003-drop-experience](../specs/003-drop-experience/spec.md). The visual requirements are
+verified in a real browser by `e2e/` ([ADR-0011](30-decisions/ADR-0011-browser-tests-with-playwright.md)).
 
 | ID | Requirement |
 | :--- | :--- |
+| REQ-090 | When the panel opens on the Drop view with no drop selected, the system shall play a short wordless story — a crowd arrives, units are held, an unconfirmed hold expires, units are sold — and offer one action per role. |
+| REQ-091 | Where the visitor chooses the buyer role, the panel shall show only what a buyer needs: the count, one action and their own hold. |
+| REQ-092 | Where the visitor chooses the organizer role, the panel shall show the drop's units, the figures, the next hold to expire and the buyer link as a QR code, and shall let the organizer release a simulated crowd. |
+| REQ-093 | The panel shall let the visitor switch between buyer and organizer on the same drop without losing it. |
+| REQ-094 | The panel shall offer Spanish and English, remember the choice, and default to the browser's language. |
 | REQ-095 | Every user-visible string of the panel shall exist in both Spanish and English with the same placeholders, and a missing or empty one shall fail the build. |
+| REQ-096 | Where the visitor prefers reduced motion, the landing story shall show its end state without animation. |
 | REQ-097 | The system shall report, with each drop, when its soonest live hold ends, or nothing when no hold is live. |
 
 ## Installable app
 
-From [specs/004-mobile-share](../specs/004-mobile-share/spec.md). Behavioural requirements
-(REQ-101 to REQ-105: offline shell, 360 px layout, buyer link, QR code) live in that spec until
-browser-level tests exist; the QR encoder was checked against an independent decoder at development time.
+From [specs/004-mobile-share](../specs/004-mobile-share/spec.md). The behavioural requirements are
+verified in a real browser by `e2e/`; the QR code is decoded by an independent library
+(`jsQR`) from a capture of the screen.
 
 | ID | Requirement |
 | :--- | :--- |
 | REQ-100 | The panel shall be installable: a web manifest with name, start URL, standalone display, theme colour and icons of 192 and 512 px, one of them maskable, and every icon present at its declared size. |
+| REQ-101 | While the network is unavailable, the panel shall open its interface from a cache and say that it is offline; it shall never serve a cached API response, and purchases shall be visibly unavailable. |
+| REQ-102 | The panel shall be usable at 360 px width: no horizontal page scroll, and touch targets of at least 44 px for the primary actions. |
+| REQ-103 | When a visitor opens a drop's buyer link (`#/d/<id>`), the panel shall show only the buyer page — no navigation, no top bar — and remember the visitor across visits; for a drop that does not exist it shall say so. |
+| REQ-104 | When the organizer opens a drop, the panel shall offer its buyer link as a QR code and as copy and share actions. |
+| REQ-105 | The QR code shall be generated in the browser without any third-party library or service, and shall encode the drop's buyer link exactly. |
 | REQ-106 | The service worker's precache list shall name every static asset of the panel and no file that does not exist, and the service worker shall never handle `/api` or a non-GET request. |
 
 ## HTTP contract

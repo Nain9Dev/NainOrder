@@ -8,6 +8,11 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Browser tests (`e2e/`, ADR-0011): 25 Playwright tests against the real application cover the
+  landing, the buyer and organizer views, the language selector, the buyer link and its QR code
+  (decoded by an independent library), the offline shell and the 360 px layout. They run in their own
+  CI job; the visual requirements REQ-090 to REQ-096 and REQ-101 to REQ-105 are now traced to tests.
+
 - Mobile, install and share (`specs/004-mobile-share`, ADR-0010): the panel is an installable app
   (manifest, icons, service worker that caches the shell and never the API), shows when it is
   offline, and works at 360 px. An organizer gets a QR code, copy and share for the drop's buyer

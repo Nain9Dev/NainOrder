@@ -29,9 +29,8 @@ matters, without reading: the product explains itself through motion and the res
 
 ## Status of verification
 
-REQ-095 and REQ-097 have automated tests. REQ-090 to REQ-094 and REQ-096 are visual and were
-verified by hand in a browser (real API and in-browser engine, both languages); a browser-level
-test is task T-056.
+Every requirement has an automated test: REQ-095 and REQ-097 in the .NET suite, REQ-090 to REQ-096
+in the browser suite (`e2e/`, [ADR-0011](../../docs/30-decisions/ADR-0011-browser-tests-with-playwright.md)).
 
 ## Non-goals
 

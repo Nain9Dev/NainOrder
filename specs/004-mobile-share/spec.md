@@ -25,9 +25,9 @@ stuck in abandoned carts, and nothing for the audience to install or sign up for
 
 ## Verification status
 
-REQ-100 and the offline cache list have automated tests. REQ-101 to REQ-105 are behavioural and were
-verified by hand in a browser (desktop and a 375 px mobile viewport, offline mode, a QR decoder run
-at development time); browser-level tests remain task T-056 of spec 003.
+Every requirement has an automated test: REQ-100 and REQ-106 in the .NET suite, REQ-101 to REQ-105
+in the browser suite (`e2e/`), where the QR code is decoded by `jsQR` from a capture of the screen.
+Installing on a physical phone is not automated (T-066, T-067).
 
 ## Non-goals
 

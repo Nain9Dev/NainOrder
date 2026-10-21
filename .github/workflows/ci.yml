@@ -110,3 +110,55 @@ jobs:
       - name: Detener el contenedor
         if: always()
         run: docker rm -f nainorder-ci || true
+
+  # The panel's visual behaviour (landing, roles, language, QR, offline, phone layout) is
+  # verified in a real browser against the real application (ADR-0011). It is its own job so a
+  # browser flake never hides the result of the .NET tests.
+  browser-tests:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      # Built before the suite starts so the server is up within Playwright's start-up window.
+      - name: Build the application
+        run: dotnet build NainOrder.Api/NainOrder.Api.csproj -c Release
+
+      - name: Install test dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Audit test dependencies
+        working-directory: e2e
+        run: npm audit --audit-level=high
+
+      - name: Install the browser
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the browser tests
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Keep the report and traces if something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore

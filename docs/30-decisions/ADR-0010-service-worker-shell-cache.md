@@ -1,6 +1,6 @@
 # ADR-0010 — Service worker that caches the shell, never the API
 
-**Status:** Proposed
+**Status:** Approved (2026-10-21, by the owner delegating the decision to the agent's best judgement)
 
 ## Context
 

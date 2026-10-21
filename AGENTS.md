@@ -63,11 +63,12 @@ Locked unless an approved ADR says otherwise:
 | Language / runtime | C# 13, .NET 10 |
 | Web | ASP.NET Core, controllers, Swashbuckle |
 | Persistence | EF Core 10, SQLite |
-| Tests | xUnit, FsCheck (property-based), `WebApplicationFactory` (integration) |
+| Tests | xUnit, FsCheck (property-based), `WebApplicationFactory` (integration); Playwright for browser tests, **development-only**, in `e2e/` ([ADR-0011](docs/30-decisions/ADR-0011-browser-tests-with-playwright.md)) |
 | Client panel | Native ES modules, CSS custom properties. **No build step, no npm, no runtime dependency.** |
 
 Do not introduce frameworks, services or dependencies as a side effect of another task. The panel's
-zero-dependency constraint is deliberate: it keeps the deployment a single `dotnet publish`.
+zero-dependency constraint is deliberate: it keeps the deployment a single `dotnet publish`. `e2e/`
+has its own `package.json` precisely so that the panel never gains one.
 
 ## Workflow
 
