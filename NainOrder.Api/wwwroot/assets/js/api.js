@@ -115,7 +115,8 @@ async function request(method, path, { body, query, signal, headers } = {}) {
         path: `${BASE}${path}${queryStr}`,
         status: 200,
         ms: elapsedMs,
-        ok: true
+        ok: true,
+        engine: "browser"
       });
       return result;
     } catch (err) {
@@ -127,7 +128,9 @@ async function request(method, path, { body, query, signal, headers } = {}) {
         path: `${BASE}${path}${queryStr}`,
         status,
         ms: elapsedMs,
-        ok: false
+        ok: false,
+        engine: "browser",
+        code: err.code
       });
       throw new ApiError(status, err);
     }
@@ -160,25 +163,46 @@ async function request(method, path, { body, query, signal, headers } = {}) {
     return request(method, path, { body, query, signal, headers });
   }
 
-  const elapsedMs = performance.now() - startedAt;
+  const payload = response.status !== 204 && response.headers.get("content-type")?.includes("json")
+    ? await response.json().catch(() => null)
+    : null;
+
+  // The trace carries what the server states about the request (REQ-110, REQ-111): its measured
+  // timings and, for a rejection, the layer that decided it. The request map draws only that.
   publishTrace({
     method,
     path: url.pathname + url.search,
     status: response.status,
-    ms: elapsedMs,
-    ok: response.ok
+    ms: performance.now() - startedAt,
+    ok: response.ok,
+    engine: "server",
+    timing: parseServerTiming(response.headers.get("server-timing")),
+    layer: response.ok ? null : payload?.layer ?? null,
+    code: response.ok ? null : payload?.code ?? null
   });
 
   if (response.status === 204) return null;
-
-  const payload = response.headers.get("content-type")?.includes("json")
-    ? await response.json().catch(() => null)
-    : null;
-
   if (!response.ok) throw new ApiError(response.status, payload);
 
   return payload;
 }
+
+/** `app;dur=12.3, db;dur=4.1;desc="3 commands"` → { app: 12.3, db: 4.1, dbCommands: 3 }. */
+export const parseServerTiming = (header) => {
+  if (!header) return null;
+
+  const timing = {};
+  for (const metric of header.split(",")) {
+    const [name, ...params] = metric.trim().split(";");
+    const duration = params.find((p) => p.startsWith("dur="));
+    if (duration) timing[name] = Number(duration.slice(4));
+
+    const description = params.find((p) => p.startsWith("desc="));
+    if (name === "db" && description) timing.dbCommands = Number.parseInt(description.slice(5).replace(/"/g, ""), 10);
+  }
+
+  return timing;
+};
 
 export const api = {
   products: {

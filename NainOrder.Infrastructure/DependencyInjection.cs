@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NainOrder.Application.Interfaces;
 using NainOrder.Infrastructure.Persistence;
+using NainOrder.Infrastructure.Persistence.Diagnostics;
 using NainOrder.Infrastructure.Persistence.Repositories;
 
 namespace NainOrder.Infrastructure;
@@ -14,7 +15,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<NainOrderDbContext>(options => options.UseSqlite(connectionString));
+        // The timing accumulator is scoped: one per request, shared by the interceptor that fills
+        // it and by the API middleware that reports it. Building the options per scope is what
+        // lets the interceptor be scoped too.
+        services.AddScoped<RequestDatabaseTiming>();
+        services.AddScoped<DatabaseTimingInterceptor>();
+        services.AddDbContext<NainOrderDbContext>((provider, options) => options
+            .UseSqlite(connectionString)
+            .AddInterceptors(provider.GetRequiredService<DatabaseTimingInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IOrderRepository, OrderRepository>();
