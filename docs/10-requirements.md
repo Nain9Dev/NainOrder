@@ -91,6 +91,17 @@ verified by an automated test is listed here.
 | REQ-095 | Every user-visible string of the panel shall exist in both Spanish and English with the same placeholders, and a missing or empty one shall fail the build. |
 | REQ-097 | The system shall report, with each drop, when its soonest live hold ends, or nothing when no hold is live. |
 
+## Installable app
+
+From [specs/004-mobile-share](../specs/004-mobile-share/spec.md). Behavioural requirements
+(REQ-101 to REQ-105: offline shell, 360 px layout, buyer link, QR code) live in that spec until
+browser-level tests exist; the QR encoder was checked against an independent decoder at development time.
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-100 | The panel shall be installable: a web manifest with name, start URL, standalone display, theme colour and icons of 192 and 512 px, one of them maskable, and every icon present at its declared size. |
+| REQ-106 | The service worker's precache list shall name every static asset of the panel and no file that does not exist, and the service worker shall never handle `/api` or a non-GET request. |
+
 ## HTTP contract
 
 | ID | Requirement |

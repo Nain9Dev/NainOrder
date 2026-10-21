@@ -13,3 +13,4 @@ Records of significant architectural and design decisions for NainOrder.
 | [ADR-0007](ADR-0007-optimistic-concurrency-on-order-aggregate.md) | Optimistic concurrency on the order aggregate | Proposed |
 | [ADR-0008](ADR-0008-drops-with-expiring-holds.md) | Drops with expiring holds | Approved |
 | [ADR-0009](ADR-0009-sqlite-wal-mode.md) | SQLite in WAL mode | Proposed |
+| [ADR-0010](ADR-0010-service-worker-shell-cache.md) | Service worker that caches the shell, never the API | Proposed |
