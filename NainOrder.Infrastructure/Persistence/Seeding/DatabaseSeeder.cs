@@ -16,7 +16,8 @@ public static class DatabaseSeeder
     /// </summary>
     public static readonly Guid DemoCustomerId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
-    private static readonly (string Sku, string Name, string Category, decimal Price, int Stock, string Description)[] CatalogSeed =
+    /// <summary>The catalogue every instance starts with. Public so a test can check stock against it.</summary>
+    public static readonly (string Sku, string Name, string Category, decimal Price, int Stock, string Description)[] CatalogSeed =
     [
         ("NO-LAP-001", "Laptop Pro X15",        "Portátiles",   1899.00m, 12, "Chasis de magnesio, 32 GB RAM y pantalla OLED de 15,6 pulgadas."),
         ("NO-LAP-002", "Ultrabook Air 13",      "Portátiles",   1249.00m,  8, "1,1 kg, 18 horas de autonomía y refrigeración pasiva silenciosa."),
@@ -39,7 +40,12 @@ public static class DatabaseSeeder
         ("Nuria Cabrera", "nuria.cabrera@example.com")
     ];
 
-    public static async Task SeedAsync(NainOrderDbContext context, CancellationToken cancellationToken = default)
+    /// <param name="includeSampleOrders">
+    /// Also seed the sample orders of <see cref="SampleOrderSeeder"/> when the database has none
+    /// (REQ-120). <c>false</c> keeps the catalogue-and-customers seed only (REQ-121).
+    /// </param>
+    public static async Task SeedAsync(
+        NainOrderDbContext context, bool includeSampleOrders = true, CancellationToken cancellationToken = default)
     {
         var changed = await SeedDemoCustomerAsync(context, cancellationToken);
         changed |= await SeedAnonymousBuyerAsync(context, cancellationToken);
@@ -47,6 +53,10 @@ public static class DatabaseSeeder
         changed |= await SeedCatalogAsync(context, cancellationToken);
 
         if (changed) await context.SaveChangesAsync(cancellationToken);
+
+        // The sample orders need the customers and the catalogue persisted first.
+        if (includeSampleOrders && await SampleOrderSeeder.SeedAsync(context, cancellationToken))
+            await context.SaveChangesAsync(cancellationToken);
     }
 
     private static async Task<bool> SeedDemoCustomerAsync(NainOrderDbContext context, CancellationToken cancellationToken)

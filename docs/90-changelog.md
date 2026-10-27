@@ -8,6 +8,12 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- A populated first screen (`specs/next-demo-first-screen`): a fresh instance seeds six sample
+  orders, one per state of the machine plus a second shipped one, dated across the last twelve
+  days and built through the domain, so the dashboard opens with revenue, a distribution, a
+  timeline, recent orders and best sellers instead of zeros. `Seed:SampleOrders=false` keeps the
+  catalogue-only seed. The in-browser engine mirrors the same six orders, dates them relative to
+  the day it is opened and replaces a database stored by an earlier version. REQ-120 to REQ-122.
 - Live request map (`specs/005-request-map`): the Architecture view animates every request across
   the four layers with the server's own figures. Every response now carries `Server-Timing`
   (`app`, and `db` with the command count, measured by an EF Core interceptor and by the read

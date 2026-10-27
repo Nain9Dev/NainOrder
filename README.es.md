@@ -13,7 +13,7 @@
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Pruebas](https://img.shields.io/badge/tests-130%20.NET%20%2B%2029%20browser-2ea44f)
+![Pruebas](https://img.shields.io/badge/tests-135%20.NET%20%2B%2032%20browser-2ea44f)
 ![Dependencias de cliente](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
 [![Demostración en vivo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
@@ -103,7 +103,8 @@ El panel está compuesto por módulos ES puros servidos directamente por la API:
 | El stock nunca se sobrevende en carreras de alta concurrencia | `StockRaceTests`, `ConcurrencyTests` |
 | Dos actualizaciones concurrentes sobre el mismo pedido nunca provocan pérdida de datos | `OrderAggregateConcurrencyProbe` |
 | El dominio tiene cero dependencias externas | `CleanArchitectureTests` |
-| El código QR enlaza al comprador, la shell funciona sin conexión y el diseño móvil encaja | `e2e/` — 29 pruebas de navegador (Playwright) sobre la app real |
+| El código QR enlaza al comprador, la shell funciona sin conexión y el diseño móvil encaja | `e2e/` — 32 pruebas de navegador (Playwright) sobre la app real |
+| El panel abre con datos, en ambos motores, en cualquier fecha | `SampleOrdersSeedTests` y `e2e/tests/dashboard.spec.ts`: seis pedidos de muestra construidos por el dominio, uno por estado |
 | El mapa de peticiones muestra métricas reales medidas, nunca estimadas | `RequestObservabilityTests`: `Server-Timing` y la propiedad `layer` en rechazos |
 | El contenedor Docker se compila y ejecuta correctamente | Workflow de CI compila la imagen y valida sondas de salud |
 
@@ -121,8 +122,8 @@ cd NainOrder/NainOrder.Api && dotnet run
 Abre <http://localhost:8170> → **Probar como comprador** o **Probar como organizador**. Disponibles también: [`/swagger`](http://localhost:8170/swagger) y `/health`. No requiere instalar base de datos externa: SQLite se auto-inicializa en modo WAL.
 
 ```bash
-dotnet test NainOrder.slnx -c Release          # 130 pruebas
-cd e2e && npm ci && npx playwright test        # 29 pruebas de navegador Playwright
+dotnet test NainOrder.slnx -c Release          # 135 pruebas
+cd e2e && npm ci && npx playwright test        # 32 pruebas de navegador Playwright
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 

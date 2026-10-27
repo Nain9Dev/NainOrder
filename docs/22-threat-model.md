@@ -20,7 +20,7 @@ Candidate controls live in §7 as explicit gaps.
 | Authentication | **None.** A deliberate non-goal — see [`00-charter.md`](00-charter.md) |
 | Authorisation | **None.** Every caller can perform every operation |
 | Persistence | SQLite file, ephemeral container storage, reseeded on start-up |
-| Data held | Synthetic catalogue and synthetic customers. No real personal data, no payment data, no secrets |
+| Data held | Synthetic catalogue, synthetic customers and synthetic sample orders. No real personal data, no payment data, no secrets |
 | Deployment | One container, non-root user, TLS terminated by a reverse proxy in front |
 | Client | Static panel served from the same origin (`NainOrder.Api/wwwroot`) |
 
@@ -172,7 +172,7 @@ sequenceDiagram
 
 ## 6. Data protection
 
-- The seeded catalogue and customers are **synthetic**. No real personal data is stored.
+- The seeded catalogue, customers and sample orders are **synthetic**. No real personal data is stored.
 - The system holds **no credentials, API keys or payment data**. There is nothing to rotate and
   nothing to leak. `gitleaks` over the full history reports no findings.
 - The client panel persists UI state and, in static demonstration mode, its in-memory database to

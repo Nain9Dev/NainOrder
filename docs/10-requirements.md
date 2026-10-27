@@ -124,6 +124,18 @@ states; the server side is verified by `RequestObservabilityTests`, the panel si
 | REQ-112 | When the panel completes a request against the API, the Architecture view shall animate it across the layers in dependency order and show the server's `app` and `db` times; when the response is a rejection, the animation shall stop at the layer the server named and show the code. |
 | REQ-113 | Where the panel runs on its in-browser engine, the map shall show a single "browser engine" node and shall not pretend the request crossed the server's layers. |
 
+## A populated first screen
+
+From [specs/next-demo-first-screen](../specs/next-demo-first-screen/spec.md). The dashboard is the
+first data screen of the panel; both engines open it on the same six sample orders, with no manual
+step. The entry route itself (`#/drop`) is unchanged: Q-008.
+
+| ID | Requirement |
+| :--- | :--- |
+| REQ-120 | When the application starts and the database holds no orders, the system shall seed sample orders covering every state of the order machine, dated across the dashboard's timeline window, built through the domain so that stock is reserved and restored by the same rules as a real order and every total equals the sum of its lines; the seed shall not run when any order exists. |
+| REQ-121 | Where the configuration sets `Seed:SampleOrders` to `false`, the system shall seed the catalogue and the customers only. |
+| REQ-122 | The in-browser engine shall date its sample orders relative to the day it is opened, so that they fall inside the dashboard's timeline window on any date, and shall replace a stored database written by an earlier version of the engine with the current sample set. |
+
 ## HTTP contract
 
 | ID | Requirement |
