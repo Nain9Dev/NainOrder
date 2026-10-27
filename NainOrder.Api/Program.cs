@@ -212,7 +212,10 @@ static async Task InitializeDatabaseAsync(WebApplication app)
         // a 500. The mode is stored in the database file, so this is a no-op after the first run.
         await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 
-        await DatabaseSeeder.SeedAsync(context);
+        // Sample orders give the dashboard something to show at once (REQ-120); an operator can
+        // keep the catalogue-only seed with Seed:SampleOrders=false (REQ-121).
+        var includeSampleOrders = app.Configuration.GetValue("Seed:SampleOrders", true);
+        await DatabaseSeeder.SeedAsync(context, includeSampleOrders);
         logger.LogInformation("Database ready at {ConnectionString}", context.Database.GetConnectionString());
     }
     catch (Exception ex)

@@ -13,7 +13,7 @@
 [![ci](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml/badge.svg)](https://github.com/Nain9Dev/NainOrder/actions/workflows/codeql.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
-![Tests](https://img.shields.io/badge/tests-130%20.NET%20%2B%2029%20browser-2ea44f)
+![Tests](https://img.shields.io/badge/tests-135%20.NET%20%2B%2032%20browser-2ea44f)
 ![Client dependencies](https://img.shields.io/badge/client%20dependencies-0-22d3ee)
 [![Live demo](https://img.shields.io/badge/live%20demo-order.naindev.com-8b5cf6)](https://order.naindev.com/)
 
@@ -109,7 +109,8 @@ The panel is plain ES modules served by the API itself: no npm, no build step, n
 | Stock is never oversold, even in a race | `StockRaceTests`, `ConcurrencyTests` |
 | Two writers on one order never lose an update | `OrderAggregateConcurrencyProbe` |
 | Domain has zero dependencies | `CleanArchitectureTests` |
-| The QR code is the buyer link, the shell works offline, the phone layout fits | `e2e/` — 29 browser tests (Playwright) against the real app, QR decoded by an independent library |
+| The QR code is the buyer link, the shell works offline, the phone layout fits | `e2e/` — 32 browser tests (Playwright) against the real app, QR decoded by an independent library |
+| The dashboard opens populated, on both engines, on any date | `SampleOrdersSeedTests` and `e2e/tests/dashboard.spec.ts`: six sample orders built through the domain, one per state |
 | The request map shows measured figures, never estimates | `RequestObservabilityTests`: `Server-Timing` and the `layer` of every rejection come from the server |
 | The shipped container works | CI builds the image and probes it |
 
@@ -128,8 +129,8 @@ Open <http://localhost:8170> → **Try as a buyer** or **Try as an organizer**. 
 and `/health`. No database to install: SQLite creates itself.
 
 ```bash
-dotnet test NainOrder.slnx -c Release          # 130 tests
-cd e2e && npm ci && npx playwright test        # 29 browser tests (starts the app itself)
+dotnet test NainOrder.slnx -c Release          # 135 tests
+cd e2e && npm ci && npx playwright test        # 32 browser tests (starts the app itself)
 docker build -t nainorder . && docker run -p 8080:8080 nainorder
 ```
 

@@ -1,8 +1,24 @@
 # Open questions
 
-**Status:** Resolved
+**Status:** Open — Q-008
 
-Historical log of design questions and their resolved decisions.
+Design questions and their resolved decisions.
+
+## Open
+
+### Q-008 — Which screen should the panel open on?
+
+Raised by the portfolio audit of 2026-10-27 ("the demos must show value on the first screen").
+Today the panel opens on `#/drop`, the wordless landing of spec 003 (REQ-090), which shows a story
+and two buttons but no figures; the first data screen is `#/panel`, now populated on both engines
+(spec `next-demo-first-screen`). Options:
+
+- (a) Keep `#/drop` as the entry. The story is the product's pitch; the dashboard is one click away.
+- (b) Open on `#/panel`, so the first screen carries figures, and reach the drop from the menu.
+- (c) Keep `#/drop` but seed a sample drop so the landing lists a recent one.
+
+No requirement changes until the owner picks one. (c) would need drops in the in-browser engine to
+survive a reload, which they do not today.
 
 ## Resolved
 

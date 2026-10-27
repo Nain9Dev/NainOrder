@@ -9,7 +9,7 @@ cd NainOrder.Api
 dotnet run
 ```
 
-Listens on `http://localhost:8170` (pinned in `Properties/launchSettings.json` per developer port registry). No database server to install. SQLite creates the file, the application applies its migrations and seeds the catalogue on start-up.
+Listens on `http://localhost:8170` (pinned in `Properties/launchSettings.json` per developer port registry). No database server to install. SQLite creates the file, the application applies its migrations and seeds the catalogue, the customers and, when the database has no orders yet, six sample orders on start-up (REQ-120), so the dashboard opens populated.
 
 | Route | Contents |
 | :--- | :--- |
@@ -69,6 +69,7 @@ previous version once.
 | Database | `ConnectionStrings__DefaultConnection` | `Data Source=nainorder.db` (`/app/data/nainorder.db` in the image) |
 | Listening port | `ASPNETCORE_HTTP_PORTS` | `8080` in the image |
 | CORS origins | `Cors__AllowedOrigins__0`, `__1`… | empty — the middleware is not registered at all |
+| Sample orders on first start | `Seed__SampleOrders` | `true` — `false` seeds the catalogue and the customers only (REQ-121) |
 
 ## Behind a reverse proxy
 
@@ -109,4 +110,5 @@ The application has no state worth recovering beyond its database file.
 | `503` / container restarting | Migration failed on start-up | Read the logs: start-up logs the failure as `Critical` and refuses to serve rather than run against a broken schema |
 | `429` on every request | Rate limit reached | Expected under load; the window is one minute |
 | Empty catalogue | Seed did not run | Restart: the seeder is idempotent and inserts only what is missing |
+| Dashboard with no orders | The database already held orders when the sample seed ran (it never touches those), or `Seed__SampleOrders=false` | To get the sample set back, delete the database file and restart |
 | Database file corrupt or locked | Ephemeral storage or an interrupted write | Delete the file and restart; migrations and seed rebuild it |

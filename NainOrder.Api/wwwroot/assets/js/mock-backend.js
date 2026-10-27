@@ -13,6 +13,9 @@ import { t } from "./i18n.js";
 
 const STORAGE_KEY = "nainorder.demo_db";
 
+/** Bump when the stored shape or the sample set changes, so older stored databases are replaced. */
+const STORAGE_VERSION = 2;
+
 const DEFAULT_CUSTOMERS = [
   { id: "3fa85f64-5717-4562-b3fc-2c963f66afa6", name: "Cliente Demo", email: "demo@naindev.com", createdAt: "2026-09-01T09:00:00Z" },
   { id: "e1a90c25-3b10-449e-8c34-7813a0e10001", name: "Marta Iglesias", email: "marta.iglesias@example.com", createdAt: "2026-09-05T11:30:00Z" },
@@ -49,82 +52,70 @@ const TRANSITIONS = {
   Cancelled: []
 };
 
-const createInitialOrders = (customers, products) => {
-  const c0 = customers[0];
-  const c1 = customers[1];
-  const c2 = customers[2];
+/**
+ * The same six sample orders the .NET seeder creates (`SampleOrderSeeder`), dated relative to the
+ * day the engine is opened so they always fall inside the dashboard's 14-day window (REQ-122).
+ * Only customers and products of the default set; every state of the machine is represented.
+ */
+const SAMPLE_ORDERS = [
+  { id: "f3010001-0000-0000-0000-000000000001", customer: 1, status: "Shipped",        daysAgo: 11, minutesAgo: 20, lines: [["NO-LAP-001", 1], ["NO-MON-001", 1]] },
+  { id: "f3010001-0000-0000-0000-000000000002", customer: 2, status: "Shipped",        daysAgo: 8,  minutesAgo: 45, lines: [["NO-KEY-001", 2], ["NO-MOU-001", 2]] },
+  { id: "f3010001-0000-0000-0000-000000000003", customer: 2, status: "Cancelled",      daysAgo: 6,  minutesAgo: 10, lines: [["NO-AUD-001", 1]] },
+  { id: "f3010001-0000-0000-0000-000000000004", customer: 3, status: "Processing",     daysAgo: 5,  minutesAgo: 30, lines: [["NO-LAP-002", 1], ["NO-STO-001", 1]] },
+  { id: "f3010001-0000-0000-0000-000000000005", customer: 1, status: "Paid",           daysAgo: 2,  minutesAgo: 50, lines: [["NO-MON-002", 2]] },
+  { id: "f3010001-0000-0000-0000-000000000006", customer: 0, status: "PendingPayment", daysAgo: 0,  minutesAgo: 95, lines: [["NO-NET-001", 1], ["NO-AUD-002", 1]] }
+];
 
-  const p0 = products[0]; // Laptop Pro X15 (1899.00)
-  const p2 = products[2]; // Monitor UltraWide (749.50)
-  const p4 = products[4]; // Teclado (139.90)
-  const p5 = products[5]; // Raton (89.90)
-  const p9 = products[9]; // SSD (219.00)
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
-  return [
-    {
-      id: "f3010001-0000-0000-0000-000000000001",
-      reference: "NO-20261010-9A2F",
-      customerId: c0.id,
-      customerName: c0.name,
-      customerEmail: c0.email,
-      status: "Shipped",
-      createdAt: "2026-10-10T10:15:00Z",
-      paidAt: "2026-10-10T10:20:00Z",
-      shippedAt: "2026-10-11T09:00:00Z",
-      cancelledAt: null,
-      items: [
-        { productId: p0.id, productName: p0.name, productSku: p0.sku, unitPrice: p0.price, quantity: 1, totalPrice: p0.price },
-        { productId: p2.id, productName: p2.name, productSku: p2.sku, unitPrice: p2.price, quantity: 1, totalPrice: p2.price }
-      ]
-    },
-    {
-      id: "f3010001-0000-0000-0000-000000000002",
-      reference: "NO-20261012-4C18",
-      customerId: c1.id,
-      customerName: c1.name,
-      customerEmail: c1.email,
-      status: "Processing",
-      createdAt: "2026-10-12T14:30:00Z",
-      paidAt: "2026-10-12T14:35:00Z",
-      shippedAt: null,
-      cancelledAt: null,
-      items: [
-        { productId: p4.id, productName: p4.name, productSku: p4.sku, unitPrice: p4.price, quantity: 2, totalPrice: p4.price * 2 },
-        { productId: p5.id, productName: p5.name, productSku: p5.sku, unitPrice: p5.price, quantity: 2, totalPrice: p5.price * 2 }
-      ]
-    },
-    {
-      id: "f3010001-0000-0000-0000-000000000003",
-      reference: "NO-20261014-7E8B",
-      customerId: c2.id,
-      customerName: c2.name,
-      customerEmail: c2.email,
-      status: "Paid",
-      createdAt: "2026-10-14T11:00:00Z",
-      paidAt: "2026-10-14T11:05:00Z",
-      shippedAt: null,
-      cancelledAt: null,
-      items: [
-        { productId: p9.id, productName: p9.name, productSku: p9.sku, unitPrice: p9.price, quantity: 1, totalPrice: p9.price }
-      ]
-    },
-    {
-      id: "f3010001-0000-0000-0000-000000000004",
-      reference: "NO-20261015-1D34",
-      customerId: c0.id,
-      customerName: c0.name,
-      customerEmail: c0.email,
-      status: "PendingPayment",
-      createdAt: "2026-10-15T08:45:00Z",
-      paidAt: null,
-      shippedAt: null,
-      cancelledAt: null,
-      items: [
-        { productId: p2.id, productName: p2.name, productSku: p2.sku, unitPrice: p2.price, quantity: 1, totalPrice: p2.price }
-      ]
-    }
-  ];
-};
+const isoAt = (ms) => new Date(ms).toISOString();
+
+/** Same shape the .NET aggregate builds: NO-yyyyMMdd-<6 hex chars of the id>. */
+const referenceFor = (id, createdAtMs) =>
+  `NO-${isoAt(createdAtMs).slice(0, 10).replace(/-/g, "")}-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+
+/**
+ * Builds the sample orders and reserves their units on `products`, as a real order would have
+ * done: a cancelled order holds nothing, every other one keeps its units out of the catalogue.
+ */
+const createInitialOrders = (customers, products, now = Date.now()) =>
+  SAMPLE_ORDERS.map((sample) => {
+    const customer = customers[sample.customer];
+    const createdAt = now - sample.daysAgo * DAY - sample.minutesAgo * MINUTE;
+    const confirmed = sample.status !== "PendingPayment" && sample.status !== "Cancelled";
+
+    const items = sample.lines.map(([sku, quantity]) => {
+      const product = products.find((p) => p.sku === sku);
+      if (sample.status !== "Cancelled") {
+        product.stockQuantity -= quantity;
+        product.stockStatus = classifyStock(product.stockQuantity);
+      }
+      return {
+        productId: product.id,
+        productName: product.name,
+        productSku: product.sku,
+        unitPrice: product.price,
+        quantity,
+        totalPrice: Math.round(product.price * quantity * 100) / 100
+      };
+    });
+
+    return {
+      id: sample.id,
+      reference: referenceFor(sample.id, createdAt),
+      customerId: customer.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      status: sample.status,
+      createdAt: isoAt(createdAt),
+      paidAt: confirmed ? isoAt(createdAt + 4 * MINUTE) : null,
+      shippedAt: sample.status === "Shipped" ? isoAt(createdAt + 22 * HOUR) : null,
+      cancelledAt: sample.status === "Cancelled" ? isoAt(createdAt + 2 * HOUR) : null,
+      items
+    };
+  });
 
 class MockDatabase {
   constructor() {
@@ -136,10 +127,14 @@ class MockDatabase {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        this.products = parsed.products || [];
-        this.customers = parsed.customers || [];
-        this.orders = parsed.orders || [];
-        return;
+        // A database stored by an earlier engine (no sample orders, or fixed dates) is replaced:
+        // the visitor loses nothing worth keeping and gets a populated panel (REQ-122).
+        if (parsed.version === STORAGE_VERSION) {
+          this.products = parsed.products || [];
+          this.customers = parsed.customers || [];
+          this.orders = parsed.orders || [];
+          return;
+        }
       }
     } catch {
       /* Fallback a datos por defecto si localStorage está bloqueado o dañado. */
@@ -150,6 +145,7 @@ class MockDatabase {
   save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        version: STORAGE_VERSION,
         products: this.products,
         customers: this.customers,
         orders: this.orders

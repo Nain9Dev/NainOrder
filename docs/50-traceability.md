@@ -129,6 +129,14 @@ Test suites:
 | REQ-112 | `e2e/tests/architecture.spec.ts` › a request crosses the map and shows the server's timings; a rejection stops at the layer the server named; a domain rule shows as rejected in Domain |
 | REQ-113 | `e2e/tests/architecture.spec.ts` › on the in-browser engine the map shows a single node |
 
+## A populated first screen
+
+| Requirement | Test |
+| :--- | :--- |
+| REQ-120 | `SampleOrdersSeedTests.A_fresh_instance_reports_orders_in_every_state_with_revenue_and_best_sellers`, `Sample_orders_are_built_through_the_domain`, `Sample_orders_reserve_stock_by_the_same_rules_as_a_real_order`, `Seeding_again_adds_nothing`; `e2e/tests/dashboard.spec.ts` › against the API the dashboard opens populated |
+| REQ-121 | `SampleOrdersSeedTests.The_sample_orders_can_be_switched_off_by_configuration` |
+| REQ-122 | `e2e/tests/dashboard.spec.ts` › the sample orders fall inside the timeline window; a stale stored database is replaced by the sample set |
+
 ## HTTP contract
 
 | Requirement | Test |

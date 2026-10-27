@@ -33,6 +33,9 @@
 
 Feature [001 — stock race](../specs/001-stock-race/tasks.md) (T-031 to T-036) is done: 82 tests green.
 
+Feature [next — demo first screen](../specs/next-demo-first-screen/tasks.md) (T-080 to T-084) is
+done: 135 .NET and 32 browser tests green. Q-008 (the entry route) stays with the owner.
+
 ## Next
 
 | ID | Task | Label | Done when |
