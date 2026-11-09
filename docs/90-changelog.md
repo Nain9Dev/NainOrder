@@ -8,6 +8,9 @@ Notable changes. Format loosely follows Keep a Changelog; dates come from git.
 
 ### Added
 
+- Search and AI-engine discoverability (`specs/next-seo-discoverability`): the public page now
+  declares a canonical URL, Open Graph and Twitter card metadata and `SoftwareApplication` JSON-LD,
+  and the site root serves `robots.txt`, `sitemap.xml` and `llms.txt`. REQ-064.
 - A populated first screen (`specs/next-demo-first-screen`): a fresh instance seeds six sample
   orders, one per state of the machine plus a second shipped one, dated across the last twelve
   days and built through the domain, so the dashboard opens with revenue, a distribution, a
