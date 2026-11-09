@@ -1,0 +1,9 @@
+# NainOrder
+
+> Order engine for limited drops: exact units, expiring holds and nothing sold twice, built as a .NET API with Clean Architecture and an installable web panel.
+
+## Links
+
+- [Live demo](https://order.naindev.com/): the interactive panel
+- [Source code](https://github.com/Nain9Dev/NainOrder): repository, architecture notes and documentation
+- [Author site](https://www.naindev.com/): Aitor Nain Mendoza Vallejo (NainDev)

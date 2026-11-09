@@ -154,3 +154,4 @@ step. The entry route itself (`#/drop`) is unchanged: Q-008.
 | REQ-061 | When a client-panel route is requested directly, the system shall return the panel so its own router can resolve it. |
 | REQ-062 | On start-up the system shall apply pending migrations and seed demonstration data idempotently, requiring no manual step. |
 | REQ-063 | The container image shall run the application as a non-root user. |
+| REQ-064 | The public page shall declare one canonical URL, a 70 to 160 character description, Open Graph and Twitter card metadata and `SoftwareApplication` JSON-LD naming its author, and the application shall serve `/robots.txt`, `/sitemap.xml` and `/llms.txt` as real files from the site root. |

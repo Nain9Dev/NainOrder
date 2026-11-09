@@ -155,6 +155,7 @@ Test suites:
 | REQ-061 | `OrderFlowTests.Deep_links_of_the_client_application_fall_back_to_the_spa` |
 | REQ-062 | `NainOrderApiFactory` boots the real application per test run; every integration test depends on migrations and seeding having succeeded. CI repeats it against the container. |
 | REQ-063 | CI job `container` asserts `id -u` is not `0` inside the running image. |
+| REQ-064 | `SeoDiscoverabilityTests` (page metadata, JSON-LD, discovery files, and the three files served by the real application). |
 
 ## Gaps
 
